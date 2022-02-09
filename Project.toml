@@ -1,0 +1,7 @@
+name = "VL_LimitOrderBook"
+uuid = "aaf583bd-e1f6-46ea-b02f-a6ceb51252d5"
+authors = ["ruize_ren <renruize1998@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+AVLTrees = "4459d02e-7d0b-4014-b2a2-e38a540ff820"
