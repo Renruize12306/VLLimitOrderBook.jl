@@ -67,6 +67,26 @@ mutable struct OrderBook{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
 end
 
 """
+UnmatchedOrder{Sz, Px, Oid, Aid, Dt}
+
+An `UnmatchedOrder` is a data structure containing __limit orders__ represented as 
+objects of type `Order{Sz,Px,Oid,Aid,Dt}`.
+
+"""
+mutable struct UnmatchedOrder{Sz<:Real, Px<:Rel, Oid<:Integer, Aid<:Integer, Dt<:DateTime}
+    bid_queue::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt} # bid unmatched orders
+    ask_queue::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt} # ask unmatched orders
+    function UnmatchedOrder{Sz, Px, Oid, Aid, Dt}() where{Sz, Px, Oid, Aid, Dt}
+        return new{Sz, Px, Oid, Aid, Dt}(
+            OneSideUnmatchedBook{Sz,Px,Oid,Aid}(; is_bid_side=true),
+            OneSideUnmatchedBook{Sz,Px,Oid,Aid}(; is_bid_side=false),
+            Dict{Symbol,Any}(:PlotTickMax => 5),
+        )
+    end
+end
+
+
+"""
     clear_book!(ob::OrderBook,n_keep::Int64=10)
 
 Remove all orders beyond `n_keep ≥ 0` from the best bid and best ask.

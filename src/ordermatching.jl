@@ -305,3 +305,71 @@ function cancel_order!(
 end
 
 cancel_order!(ob::OrderBook, o::Order) = cancel_order!(ob, o.orderid, o.side, o.price)
+
+function notify()
+
+function cancel_unmatched_market_order!(
+    ob::OrderBook{Sz,Px,Oid,Aid}, orderid::Oid, side::OrderSide, price
+) where {Sz,Px,Oid,Aid}
+    # Delete order from bid (buy) or ask (sell) book
+    if isbuy(side)
+        popped_ord = pop_order!(ob.bid_orders, Px(price), orderid)
+    else
+        popped_ord = pop_order!(ob.ask_orders, Px(price), orderid)
+    end
+    # Delete order from account maps
+    if !isnothing(popped_ord) && !isnothing(popped_ord.acctid)
+        _delete_order_acct_map!(ob.acct_map, popped_ord.acctid, popped_ord.orderid)
+    end
+    return popped_ord
+end
+
+# unmatched order process into waiting list
+
+"""
+    process_unmatched_order!(ob::OrderBook, o::Order)
+    
+    For limit order,
+        
+        Considering the limit order fill type is FOK, IOC, and AON(all or none), both of FOK, IOC two kinds of fill type
+        will be eliminate after the limit order with certain price is submitted, so there is no need for cancel order
+        As for AON, this is similiar to the FOK but it will not be eliminated when there is no appropriate market feed.
+
+        So as for limit order, we only need to conisder the fill_in type of AON.
+
+    For market order,
+
+        It's said that market order will be executed immediately, so that there is no usage for market order
+        "Market orders are optimal when the primary goal is to execute the trade immediately."
+        https://www.schwab.com/resource-center/insights/content/3-order-types-market-limit-and-stop-orders
+        "A market order is an instruction to buy or sell a security immediately at the current price."
+        https://www.investopedia.com/terms/m/marketorder.asp
+        "A market order is an order to buy or sell a security immediately. "
+        https://www.investor.gov/introduction-investing/investing-basics/how-stock-markets-work/types-orders#:~:text=A%20market%20order%20is%20an,for%20a%20buy%20order)%20price.
+        
+    So, only limit order with AON fill type are being considered
+
+Cancels Order `o`, or order with matching information from OrderBook.
+
+Provide `acct_id` if known to guarantee correct account tracking.
+"""
+function process_unmatched_limit_order!(
+    ob::OrderBook{Sz,Px,Oid,Aid}, orderid::Oid, side::OrderSide, price
+) where {Sz,Px,Oid,Aid}
+    #=
+    return (
+        new_open_order, cross_match_lst, remaining_size
+    )::Tuple{Union{Order{Sz,Px,Oid,Aid},Nothing},Vector{Order{Sz,Px,Oid,Aid}},Sz}
+    =#
+    # Delete order from bid (buy) or ask (sell) book
+    if isbuy(side)
+        popped_ord = pop_order!(ob.bid_orders, Px(price), orderid)
+    else
+        popped_ord = pop_order!(ob.ask_orders, Px(price), orderid)
+    end
+    # Delete order from account maps
+    if !isnothing(popped_ord) && !isnothing(popped_ord.acctid)
+        _delete_order_acct_map!(ob.acct_map, popped_ord.acctid, popped_ord.orderid)
+    end
+    return popped_ord
+end
