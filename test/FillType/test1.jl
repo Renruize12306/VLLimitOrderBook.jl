@@ -16,6 +16,7 @@
 
 import VL_LimitOrderBook
 using VL_LimitOrderBook, Random
+using AVLTrees: AVLTree
 using Test
 using Base.Iterators: zip,cycle,take,filter
 

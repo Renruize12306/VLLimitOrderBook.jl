@@ -67,20 +67,19 @@ mutable struct OrderBook{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
 end
 
 """
-UnmatchedOrder{Sz, Px, Oid, Aid, Dt}
+UnmatchedOrder{Sz, Px, Oid, Aid, Dt, Ip} 
 
 An `UnmatchedOrder` is a data structure containing __limit orders__ represented as 
-objects of type `Order{Sz,Px,Oid,Aid,Dt}`.
+objects of type `Order{Sz, Px, Oid, Aid, Dt, Ip} `.
 
 """
-mutable struct UnmatchedOrder{Sz<:Real, Px<:Rel, Oid<:Integer, Aid<:Integer, Dt<:DateTime}
-    bid_queue::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt} # bid unmatched orders
-    ask_queue::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt} # ask unmatched orders
-    function UnmatchedOrder{Sz, Px, Oid, Aid, Dt}() where{Sz, Px, Oid, Aid, Dt}
-        return new{Sz, Px, Oid, Aid, Dt}(
-            OneSideUnmatchedBook{Sz,Px,Oid,Aid}(; is_bid_side=true),
-            OneSideUnmatchedBook{Sz,Px,Oid,Aid}(; is_bid_side=false),
-            Dict{Symbol,Any}(:PlotTickMax => 5),
+mutable struct UnmatchedOrderBook{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String}
+    bid_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip} # bid orders
+    ask_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip} # ask orders
+    function UnmatchedOrderBook{Sz, Px, Oid, Aid, Dt, Ip}() where {Sz, Px, Oid, Aid, Dt, Ip}
+        return new{Sz, Px, Oid, Aid, Dt, Ip}(
+            OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip}(; is_bid_side=true),
+            OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip}(; is_bid_side=false),
         )
     end
 end
@@ -347,3 +346,21 @@ function Base.show(io::IO, ob::OrderBook)
     println(io, ob)
     return nothing
 end
+#=
+function _print_book_info(io::IO, uob::UnmatchedOrderBook{Sz, Px, Oid, Aid, Dt, Ip}) where {Sz, Px, Oid, Aid, Dt, Ip}
+    return print(
+        io,
+        "  ⋄ best bid/ask price: $(best_bid_ask(ob))\n",
+        "  ⋄ total bid/ask volume: $(volume_bid_ask(ob))\n",
+        "  ⋄ total bid/ask orders: $(n_orders_bid_ask(ob))\n",
+        "  ⋄ flags = $([ k => v for (k,v) in ob.flags])",
+    )
+end
+
+Base.print(io::IO, uob::UnmatchedOrderBook) = _print_book_info(io, uob)
+
+function Base.show(io::IO, ::MIME"text/plain", uob::UnmatchedOrderBook)
+    println(io, uob)
+    return nothing
+end
+=#
