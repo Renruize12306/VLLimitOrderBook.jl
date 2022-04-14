@@ -78,8 +78,8 @@ import Base.@kwdef
     best_price::Union{Px,Nothing} = nothing # best bid or ask
 end
 
-isbidunmatchedbook(sub::OneSideUnmatchedBook) = sub.is_bid_side
-isaskunmatchedbook(sub::OneSideUnmatchedBook) = !sub.is_bid_side
+isbidunmatchedbook(sub::OneSideUnmatchedBook) = !sub.is_bid_side
+isaskunmatchedbook(sub::OneSideUnmatchedBook) = sub.is_bid_side
 Base.isempty(sub::OneSideUnmatchedBook) = isempty(sub.unmatched_book)
 
 "Updates the latest best price in a OneSideUnmatchedBook (either :BID or :ASK book)."
@@ -180,7 +180,7 @@ function pop_unmatched_order_withinfilter!(
                     poped_volume += single_unmatched.size
                     st = searchsortedfirst(current_book, single_unmatched)
                     delete!((current_book, st))
-                    println(length(current_book))
+                    # println(length(current_book))
                 else 
                     break
                 end
@@ -207,7 +207,7 @@ function pop_unmatched_order_withinfilter!(
                     poped_volume += single_unmatched.size
                     st = searchsortedfirst(current_book, single_unmatched)
                     delete!((current_book, st))
-                    println(length(current_book))
+                    # println(length(current_book))
                 else 
                     break
                 end
@@ -226,4 +226,19 @@ function pop_unmatched_order_withinfilter!(
         sub.total_volume -= poped_volume
         _update_next_best_price!(sub)
     end
+end
+
+
+function notify_all!(
+    res::SortedSet{Priority{Sz, Px, Oid, Aid, Dt, Ip}}
+) where {Sz, Px, Oid, Aid, Dt, Ip}
+    for current_order in res
+        _notify_single(current_order)
+    end
+end
+
+function _notify_single(
+    current_order::Priority{Sz, Px, Oid, Aid, Dt, Ip}
+)where {Sz, Px, Oid, Aid, Dt, Ip}
+    
 end
