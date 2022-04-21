@@ -73,13 +73,13 @@ An `UnmatchedOrder` is a data structure containing __limit orders__ represented 
 objects of type `Order{Sz, Px, Oid, Aid, Dt, Ip} `.
 
 """
-mutable struct UnmatchedOrderBook{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String}
-    bid_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip} # bid orders
-    ask_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip} # ask orders
-    function UnmatchedOrderBook{Sz, Px, Oid, Aid, Dt, Ip}() where {Sz, Px, Oid, Aid, Dt, Ip}
-        return new{Sz, Px, Oid, Aid, Dt, Ip}(
-            OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip}(; is_bid_side=true),
-            OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip}(; is_bid_side=false),
+mutable struct UnmatchedOrderBook{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String, Pt<:Integer}
+    bid_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt} # bid orders
+    ask_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt} # ask orders
+    function UnmatchedOrderBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}() where {Sz, Px, Oid, Aid, Dt, Ip, Pt}
+        return new{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
+            OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}(; is_bid_side=true),
+            OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}(; is_bid_side=false),
         )
     end
 end

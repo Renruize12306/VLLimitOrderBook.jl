@@ -2,17 +2,17 @@ import VL_LimitOrderBook
 using VL_LimitOrderBook, Random, Dates, Test
 using Base.Iterators: zip,cycle,take,filter
 
-Priority1 = Priority{Int64, Float64, Int64, Int64, DateTime, String}
+Priority1 = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 
-MyUOBType = UnmatchedOrderBook{Int64, Float64, Int64, Int64, DateTime, String}
+MyUOBType = UnmatchedOrderBook{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 uob = MyUOBType()
 
-p1 = Priority1(1, 10.0, 101, 0, now(),"192.168.1.1")
-p2 = Priority1(1, 10.0, 102, 0, now(),"192.168.2.1")
-p3 = Priority1(1, 19.0, 103, 0, now(),"192.268.1.1")
-p4 = Priority1(5, 10.0, 104, 0, now(),"192.268.1.1")
-p5 = Priority1(2, 10.0, 105, 0, now(),"192.2.1.1")
-p6 = Priority1(1, 10.0, 106, 0, now(),"192.268.100.1")
+p1 = Priority1(1, 10.0, 101, 0, now(),"192.168.1.1", 8088)
+p2 = Priority1(1, 10.0, 102, 0, now(),"193.168.2.1", 8089)
+p3 = Priority1(1, 19.0, 103, 0, now(),"194.268.1.1", 8088)
+p4 = Priority1(5, 10.0, 104, 0, now(),"195.268.1.1", 8089)
+p5 = Priority1(2, 10.0, 105, 0, now(),"196.2.1.1", 8088)
+p6 = Priority1(1, 10.0, 106, 0, now(),"197.268.100.1", 8089)
 
 insert_unmatched_order!(uob.ask_unmatched_orders, p1)
 insert_unmatched_order!(uob.ask_unmatched_orders, p2)
@@ -56,7 +56,7 @@ Priority{Int64, Float64, Int64, Int64, DateTime, String}(1, 10.0, 106, 0, DateTi
 =#
 
 # working with ask orders
-p7 = Priority1(10,11.0,106, 0,now(),"192.268.100.1")
+p7 = Priority1(10,11.0,106, 0,now(),"192.268.100.1", 8088)
 pop_unmatched_order_withinfilter!(uob.ask_unmatched_orders, p7)
 
 

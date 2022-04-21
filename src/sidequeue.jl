@@ -1,20 +1,20 @@
 using Dates, Base, DataStructures
 import Base: >, <, ==, !=, isless, <=, >=, !
-
 abstract type Comparable end
 
-mutable struct Priority{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String}   <: Comparable
+mutable struct Priority{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String, Pt<:Integer}   <: Comparable
     size::Sz
     price::Px
     transcation_id::Oid
     account_id::Aid
     create_time::Dt
     ip_address::Ip
-    function Priority{Sz, Px, Oid, Aid, Dt, Ip}(
-        size::Sz, price::Px, transcation_id::Oid, account_id::Aid, create_time::Dt, ip_address::Ip
-        )where{Sz, Px, Oid, Aid, Dt, Ip}
-        new{Sz,Px,Oid, Aid,Dt,Ip}(
-            Sz(size), Px(price), Oid(transcation_id), Aid(account_id), Dt(create_time), Ip(ip_address)
+    port::Pt
+    function Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
+        size::Sz, price::Px, transcation_id::Oid, account_id::Aid, create_time::Dt, ip_address::Ip, port::Pt
+        )where{Sz, Px, Oid, Aid, Dt, Ip, Pt}
+        new{Sz,Px,Oid,Aid,Dt,Ip,Pt}(
+            Sz(size), Px(price), Oid(transcation_id), Aid(account_id), Dt(create_time), Ip(ip_address), Pt(port)
             )
     end
 end
@@ -70,9 +70,9 @@ end
 
 isless(x::Priority, y::Priority) = (x < y)
 import Base.@kwdef
-@kwdef mutable struct OneSideUnmatchedBook{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String}
+@kwdef mutable struct OneSideUnmatchedBook{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String, Pt<:Integer}
     is_bid_side::Bool
-    unmatched_book::SortedSet{Priority{Sz, Px, Oid, Aid, Dt, Ip}} = SortedSet{Priority{Sz, Px, Oid, Aid, Dt, Ip}}()
+    unmatched_book::SortedSet{Priority{Sz,Px,Oid,Aid,Dt,Ip,Pt}} = SortedSet{Priority{Sz,Px,Oid,Aid,Dt,Ip,Pt}}()
     total_volume::Sz = 0 # Total volume available in shares
     num_orders::Int32 = Int32(0) # Number of orders in the book
     best_price::Union{Px,Nothing} = nothing # best bid or ask
@@ -119,17 +119,18 @@ Provide `acct_id` if known to guarantee correct account tracking.
 """
 
 function insert_unmatched_order!(
-    sub::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip},
-    new_order_priority::Priority{Sz, Px, Oid, Aid, Dt, Ip}
-) where {Sz, Px, Oid, Aid, Dt, Ip}
+    sub::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt},
+    new_order_priority::Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}
+) where {Sz, Px, Oid, Aid, Dt, Ip, Pt}
     price = isaskunmatchedbook(sub) ? new_order_priority.price : -new_order_priority.price
-    new_order_priority_with_bool = Priority{Sz, Px, Oid, Aid, Dt, Ip}(
+    new_order_priority_with_bool = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
         new_order_priority.size, 
         price, 
         new_order_priority.transcation_id,
         new_order_priority.account_id, 
         new_order_priority.create_time, 
-        new_order_priority.ip_address
+        new_order_priority.ip_address,
+        new_order_priority.port
         )
     push!(sub.unmatched_book,new_order_priority_with_bool)
     sub.num_orders += 1
@@ -141,8 +142,8 @@ end
 @inline _is_best_price_inside_limit(::OneSideUnmatchedBook, ::Nothing) = true
 
 @inline function _is_best_price_inside_limit(
-    sub::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip}, limit_price::Px
-) where {Sz, Px, Oid, Aid, Dt, Ip}
+    sub::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}, limit_price::Px
+) where {Sz, Px, Oid, Aid, Dt, Ip, Pt}
     if isbidunmatchedbook(sub)
         return sub.best_price >= limit_price
     else
@@ -151,18 +152,19 @@ end
 end
 
 function pop_unmatched_order_withinfilter!(
-    sub::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip},
-    new_order_priority::Priority{Sz, Px, Oid, Aid, Dt, Ip}
-) where {Sz, Px, Oid, Aid, Dt, Ip}
+    sub::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt},
+    new_order_priority::Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}
+) where {Sz, Px, Oid, Aid, Dt, Ip, Pt}
     if _is_best_price_inside_limit(sub, new_order_priority.price)
         price = isaskunmatchedbook(sub) ? new_order_priority.price : -new_order_priority.price
-        new_order_priority_with_bool = Priority{Sz, Px, Oid, Aid, Dt, Ip}(
+        new_order_priority_with_bool = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
             new_order_priority.size, 
             price, 
             new_order_priority.transcation_id,
             new_order_priority.account_id, 
             new_order_priority.create_time, 
-            new_order_priority.ip_address
+            new_order_priority.ip_address,
+            new_order_priority.port
             )
         current_book = sub.unmatched_book
         res = SortedSet{Priority}()
@@ -192,13 +194,14 @@ function pop_unmatched_order_withinfilter!(
                 # println(single_unmatched)
                 if (single_unmatched >= new_order_priority_with_bool && new_order_priority.size - single_unmatched.size >= 0)
                     price = -single_unmatched.price
-                    single_unmatched_with_bool = Priority{Sz, Px, Oid, Aid, Dt, Ip}(
+                    single_unmatched_with_bool = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
                         single_unmatched.size, 
                         price, 
                         single_unmatched.transcation_id,
                         single_unmatched.account_id, 
                         single_unmatched.create_time, 
-                        single_unmatched.ip_address
+                        single_unmatched.ip_address,
+                        single_unmatched.port
                         )
                     push!(res, single_unmatched_with_bool)
                     new_order_priority.size -= single_unmatched.size
@@ -219,7 +222,9 @@ function pop_unmatched_order_withinfilter!(
             for k in res
                 println(k)
             end
-            # notify(res)
+            for current_order in res
+                _notify_single(current_order)
+            end
             println("\n\n notify done \n\n")
         end
         sub.num_orders -= poped_order
@@ -228,17 +233,101 @@ function pop_unmatched_order_withinfilter!(
     end
 end
 
+using WebSockets
+import WebSockets:Response, Request
+using Sockets
+import DataStructures: Deque, Dict
+using Serialization
 
-function notify_all!(
-    res::SortedSet{Priority{Sz, Px, Oid, Aid, Dt, Ip}}
-) where {Sz, Px, Oid, Aid, Dt, Ip}
-    for current_order in res
-        _notify_single(current_order)
-    end
+map = Dict{Int, Deque{Priority}}()
+
+# Custom Serialization of a Priority1 instance
+function Serialization.serialize(s::AbstractSerializer, instance::Priority)
+    Serialization.writetag(s.io, Serialization.OBJECT_TAG)
+    Serialization.serialize(s, Priority)
+    Serialization.serialize(s, instance.size)
+    Serialization.serialize(s, instance.price)
+    Serialization.serialize(s, instance.transcation_id)
+    Serialization.serialize(s, instance.account_id)
+    Serialization.serialize(s, instance.create_time)
+    Serialization.serialize(s, instance.ip_address)
+    Serialization.serialize(s, instance.port)
 end
 
 function _notify_single(
-    current_order::Priority{Sz, Px, Oid, Aid, Dt, Ip}
-)where {Sz, Px, Oid, Aid, Dt, Ip}
-    
+    current_order::Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}
+)where {Sz, Px, Oid, Aid, Dt, Ip, Pt}
+    if !haskey(map, current_order.port)
+        get!(map, current_order.port) do 
+            Deque{Priority}()
+        end
+        notify(map, string(Sockets.getipaddr()), current_order.port)
+    end
+    deque = map[current_order.port]
+    push!(deque, current_order)
+end
+
+function serialize_content(cur)
+    write_iob = IOBuffer()
+    serialize(write_iob, cur)
+    seekstart(write_iob)
+    return read(write_iob)
+end
+
+function notify(map, ip_address, port)
+    println("current Ip is: ", ip_address)
+    println("current port is: ", port)
+    function coroutine(thisws)
+         try
+            if haskey(map, port)
+                deque = map[port]
+                if isempty(deque)
+                    message = "Current queue is empty"
+                    content = serialize_content(message)
+                    # println(content)
+                    writeguarded(thisws, content)
+                    println("from server posted: ", message, " at $(now())")
+                end     
+                while !isempty(deque)
+                    cur = first(deque)
+                    content = serialize_content(cur)
+                    writeguarded(thisws, content)
+                    println("from server posted: ", string(cur), " at $(now())")
+                    popfirst!(deque)               
+                end
+            else
+                message = "Port is not open"
+                content = serialize_content(message)
+                writeguarded(thisws, content)
+                println("from server posted: ", message, " at $(now())")
+            end
+        catch exc 
+            println(stacktrace())
+            println(exc)
+        end
+    end
+
+    function gatekeeper(req, ws)
+        orig = WebSockets.origin(req)
+        if occursin(ip_address, orig) | occursin("", orig)
+            coroutine(ws)
+        else        
+            @warn("Unauthorized websocket connection, $orig not approved by gatekeeper, expected $ip_address")
+        end
+        nothing
+    end
+
+    serverWS = WebSockets.ServerWS((req) -> WebSockets.Response(200), 
+                                            gatekeeper)
+
+    @async begin 
+        try
+            WebSockets.with_logger(WebSocketLogger()) do
+                WebSockets.serve(serverWS, ip_address, port)
+            end
+        catch exc 
+            println(stacktrace())
+            println(exc)
+        end
+    end
 end
