@@ -219,12 +219,7 @@ function pop_unmatched_order_withinfilter!(
         if !(isempty(res))
             # temporarily output this in the console
             println("\n\nthis is matched order,\nthis place will perform notify \n\n")
-            for k in res
-                println(k)
-            end
-            for current_order in res
-                _notify_single(current_order)
-            end
+            _notify_all(res)
             println("\n\n notify done \n\n")
         end
         sub.num_orders -= poped_order
@@ -233,18 +228,18 @@ function pop_unmatched_order_withinfilter!(
     end
 end
 
-using WebSockets
+using HTTP
+using WebSockets, Sockets, Serialization
 import WebSockets:Response, Request
-using Sockets
 import DataStructures: Deque, Dict
-using Serialization
+import VL_LimitOrderBook
+using VL_LimitOrderBook, Random, Dates, Test, DataStructures
 
-map = Dict{Int, Deque{Priority}}()
-
-# Custom Serialization of a Priority1 instance
-function Serialization.serialize(s::AbstractSerializer, instance::Priority)
+MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
+# Custom Serialization of a MyPriority instance
+function Serialization.serialize(s::AbstractSerializer, instance::MyPriority)
     Serialization.writetag(s.io, Serialization.OBJECT_TAG)
-    Serialization.serialize(s, Priority)
+    Serialization.serialize(s, MyPriority)
     Serialization.serialize(s, instance.size)
     Serialization.serialize(s, instance.price)
     Serialization.serialize(s, instance.transcation_id)
@@ -254,80 +249,11 @@ function Serialization.serialize(s::AbstractSerializer, instance::Priority)
     Serialization.serialize(s, instance.port)
 end
 
-function _notify_single(
-    current_order::Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}
-)where {Sz, Px, Oid, Aid, Dt, Ip, Pt}
-    if !haskey(map, current_order.port)
-        get!(map, current_order.port) do 
-            Deque{Priority}()
-        end
-        notify(map, string(Sockets.getipaddr()), current_order.port)
-    end
-    deque = map[current_order.port]
-    push!(deque, current_order)
-end
-
-function serialize_content(cur)
-    write_iob = IOBuffer()
-    serialize(write_iob, cur)
-    seekstart(write_iob)
-    return read(write_iob)
-end
-
-function notify(map, ip_address, port)
-    println("current Ip is: ", ip_address)
-    println("current port is: ", port)
-    function coroutine(thisws)
-         try
-            if haskey(map, port)
-                deque = map[port]
-                if isempty(deque)
-                    message = "Current queue is empty"
-                    content = serialize_content(message)
-                    # println(content)
-                    writeguarded(thisws, content)
-                    println("from server posted: ", message, " at $(now())")
-                end     
-                while !isempty(deque)
-                    cur = first(deque)
-                    content = serialize_content(cur)
-                    writeguarded(thisws, content)
-                    println("from server posted: ", string(cur), " at $(now())")
-                    popfirst!(deque)               
-                end
-            else
-                message = "Port is not open"
-                content = serialize_content(message)
-                writeguarded(thisws, content)
-                println("from server posted: ", message, " at $(now())")
-            end
-        catch exc 
-            println(stacktrace())
-            println(exc)
-        end
-    end
-
-    function gatekeeper(req, ws)
-        orig = WebSockets.origin(req)
-        if occursin(ip_address, orig) | occursin("", orig)
-            coroutine(ws)
-        else        
-            @warn("Unauthorized websocket connection, $orig not approved by gatekeeper, expected $ip_address")
-        end
-        nothing
-    end
-
-    serverWS = WebSockets.ServerWS((req) -> WebSockets.Response(200), 
-                                            gatekeeper)
-
-    @async begin 
-        try
-            WebSockets.with_logger(WebSocketLogger()) do
-                WebSockets.serve(serverWS, ip_address, port)
-            end
-        catch exc 
-            println(stacktrace())
-            println(exc)
-        end
+function _notify_all(set::SortedSet)
+    HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
+        io = IOBuffer()
+        serialize(io, set)
+        s = take!(io)
+        write(ws, s)
     end
 end
