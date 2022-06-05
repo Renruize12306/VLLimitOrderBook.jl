@@ -11,10 +11,16 @@ mutable struct Priority{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:Date
     ip_address::Ip
     port::Pt
     function Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
-        size::Sz, price::Px, transcation_id::Oid, account_id::Aid, create_time::Dt, ip_address::Ip, port::Pt
-        )where{Sz, Px, Oid, Aid, Dt, Ip, Pt}
-        new{Sz,Px,Oid,Aid,Dt,Ip,Pt}(
-            Sz(size), Px(price), Oid(transcation_id), Aid(account_id), Dt(create_time), Ip(ip_address), Pt(port)
+        size::Sz, 
+        price::Px, 
+        transcation_id::Oid, 
+        account_id::Aid, 
+        create_time::Dt, 
+        ip_address::Ip, 
+        port::Pt
+        )where{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer,Dt<:DateTime,Ip<:String,Pt<:Integer}
+        new{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
+            Sz(size), Px(price), transcation_id, account_id, Dt(create_time), Ip(ip_address), Pt(port)
             )
     end
 end
@@ -170,29 +176,12 @@ function pop_unmatched_order_withinfilter!(
         res = SortedSet{Priority}()
         poped_order = 0
         poped_volume = 0
-        if isaskunmatchedbook(sub)
-            firstsc = searchsortedfirst(current_book, first(current_book))
-            endsc = searchsortedfirst(current_book,new_order_priority_with_bool)
-            for single_unmatched in inclusive(current_book,(firstsc,endsc))
+        if !isaskunmatchedbook(sub)
+            # firstsc = searchsortedfirst(current_book, first(current_book))
+            # endsc = searchsortedfirst(current_book,new_order_priority_with_bool)
+            # for single_unmatched in inclusive(current_book,(endsc,firstsc))
+            for single_unmatched in current_book
                 if (single_unmatched <= new_order_priority_with_bool && new_order_priority.size - single_unmatched.size >= 0)
-                    push!(res, single_unmatched)
-                    new_order_priority.size -= single_unmatched.size
-                    # println(new_order_priority.size)
-                    poped_order += 1
-                    poped_volume += single_unmatched.size
-                    st = searchsortedfirst(current_book, single_unmatched)
-                    delete!((current_book, st))
-                    # println(length(current_book))
-                else 
-                    break
-                end
-            end
-        else
-            firstsc = searchsortedfirst(current_book,new_order_priority_with_bool)
-            endsc = searchsortedfirst(current_book, last(current_book))
-            for single_unmatched in inclusive(current_book,(firstsc,endsc))
-                # println(single_unmatched)
-                if (single_unmatched >= new_order_priority_with_bool && new_order_priority.size - single_unmatched.size >= 0)
                     price = -single_unmatched.price
                     single_unmatched_with_bool = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
                         single_unmatched.size, 
@@ -215,10 +204,32 @@ function pop_unmatched_order_withinfilter!(
                     break
                 end
             end
+        else
+            # firstsc = searchsortedfirst(current_book,new_order_priority_with_bool)
+            # endsc = searchsortedfirst(current_book, last(current_book))
+            # for single_unmatched in inclusive(current_book,(firstsc,endsc))
+            for single_unmatched in current_book
+                # println(single_unmatched)
+                if (single_unmatched <= new_order_priority && new_order_priority.size - single_unmatched.size >= 0)
+                    push!(res, single_unmatched)
+                    new_order_priority.size -= single_unmatched.size
+                    # println(new_order_priority.size)
+                    poped_order += 1
+                    poped_volume += single_unmatched.size
+                    st = searchsortedfirst(current_book, single_unmatched)
+                    delete!((current_book, st))
+                    # println(length(current_book))
+                else 
+                    break
+                end
+            end
         end
         if !(isempty(res))
             # temporarily output this in the console
             println("\n\nthis is matched order,\nthis place will perform notify \n\n")
+            for re in res
+                println(re)
+            end
             _notify_all(res)
             println("\n\n notify done \n\n")
         end

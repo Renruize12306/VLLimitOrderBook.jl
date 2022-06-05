@@ -23,13 +23,14 @@ defaults to `fill_mode=VANILLA_FILLTYPE`, representing the default order matchin
 """
 function submit_limit_order!(
     ob::OrderBook{Sz,Px,Oid,Aid},
+    uob::UnmatchedOrderBook{Sz,Px,Oid,Aid,Dt,Ip,Pt},
     orderid::Oid,
     side::OrderSide,
     limit_price::Real,
     limit_size::Real,
     acct_id::Union{Nothing,Aid} = nothing,
     fill_mode::OrderTraits=VANILLA_FILLTYPE,
-) where {Sz,Px,Oid,Aid}
+) where {Sz,Px,Oid,Aid,Dt,Ip,Pt}
     # Part 0 - Check Arguments
     if !((limit_price > zero(limit_price)) && (limit_size > zero(limit_size)))
         error("Both limit_price and limit_size must be positive")
@@ -43,6 +44,11 @@ function submit_limit_order!(
         cross_match_lst, remaining_size = _walk_order_book_bysize!(
             ob.ask_orders, Sz(limit_size), Px(limit_price), fill_mode
         )
+        new_order_priority = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
+            Sz(limit_size), convert(Float64, limit_price), orderid, acct_id, now(),"0.0.0.0", 0
+            )
+        pop_unmatched_order_withinfilter!(uob.bid_unmatched_orders, new_order_priority)
+
     elseif allows_cross(fill_mode) &&
            !isbuy(side) &&
            !isnothing(best_ask) &&
@@ -50,6 +56,10 @@ function submit_limit_order!(
         cross_match_lst, remaining_size = _walk_order_book_bysize!(
             ob.bid_orders, Sz(limit_size), Px(limit_price), fill_mode
         )
+        new_order_priority = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
+            Sz(limit_size), convert(Float64, limit_price), orderid, acct_id, now(),"0.0.0.0", 0
+        )
+        pop_unmatched_order_withinfilter!(uob.ask_unmatched_orders, new_order_priority)
     else # order can or does not cross, return empty matches
         cross_match_lst, remaining_size = Vector{Order{Sz,Px,Oid,Aid}}(), Sz(limit_size)
     end
@@ -62,7 +72,11 @@ function submit_limit_order!(
             new_open_order = Order{Sz,Px,Oid,Aid}(
                 side, remaining_size, limit_price, orderid, acct_id
             )
+            new_order_priority = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
+                remaining_size, convert(Float64, limit_price), orderid, acct_id, now(),"0.0.0.0", 0
+            )
             insert_order!(ob.bid_orders, new_open_order)
+            insert_unmatched_order!(uob.ask_unmatched_orders, new_order_priority)
             # if account_id present, add order account map
             isnothing(acct_id) || _add_order_acct_map!(ob.acct_map, acct_id, new_open_order)
             # set remaining size to zero
@@ -72,7 +86,11 @@ function submit_limit_order!(
             new_open_order = Order{Sz,Px,Oid,Aid}(
                 side, remaining_size, limit_price, orderid, acct_id
             )
+            new_order_priority = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
+                remaining_size, convert(Float64, limit_price), orderid, acct_id, now(),"0.0.0.0", 0
+            )
             insert_order!(ob.ask_orders, new_open_order)
+            insert_unmatched_order!(uob.bid_unmatched_orders, new_order_priority)
             # if account_id present, add order account map
             isnothing(acct_id) || _add_order_acct_map!(ob.acct_map, acct_id, new_open_order)
             # set remaining size to zero

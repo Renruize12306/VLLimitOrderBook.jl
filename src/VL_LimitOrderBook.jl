@@ -13,6 +13,7 @@ export OrderBook, Order, OrderTraits, AcctMap, OrderSide
 export Monetary, AssetMismatch
 export Priority, OneSideUnmatchedBook, UnmatchedOrderBook
 export submit_order!,
+    insert_unmatched_order!,
     submit_limit_order!,
     cancel_order!,
     submit_market_order!,
@@ -28,6 +29,5 @@ export submit_order!,
     write_csv,
     process_file,
     order_types,
-    insert_unmatched_order!,
     pop_unmatched_order_withinfilter!
 end
