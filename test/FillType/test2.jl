@@ -1,4 +1,4 @@
-using VL_LimitOrderBook, Random
+using VL_LimitOrderBook
 using Dates
 using Base.Iterators: zip,cycle,take,filter
 

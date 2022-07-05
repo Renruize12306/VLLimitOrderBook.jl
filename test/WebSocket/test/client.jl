@@ -3,7 +3,7 @@ using Dates
 using Sockets
 using Serialization
 
-using VL_LimitOrderBook, Random
+using VL_LimitOrderBook
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 
