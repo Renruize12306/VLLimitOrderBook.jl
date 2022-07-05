@@ -1,23 +1,5 @@
-# VANILLA_FILLTYPE √
-
-# IMMEDIATEORCANCEL_FILLTYPE √
-
-# submit_limit_order!(ob, 111, BUY_ORDER, 99, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE)
-# match other below order, the other disregard
-
-# submit_limit_order!(ob, 111, SELL_ORDER, 99, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.988, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # nothing changed
-
-# FILLORKILL_FILLTYPE
-
-# submit_limit_order!(ob, 111, BUY_ORDER, 99, 60, 101111, FILLORKILL_FILLTYPE) nothing changed
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 60, 101111, FILLORKILL_FILLTYPE) error
-
-import VL_LimitOrderBook
 using VL_LimitOrderBook, Random
-using AVLTrees: AVLTree
-using Test,Dates
+using Dates
 using Base.Iterators: zip,cycle,take,filter
 
 MyUOBType = UnmatchedOrderBook{Int64, Float64, Int64, Int64, DateTime, String, Integer}
@@ -70,8 +52,8 @@ end
 # mo_matches
 # mo_ltt
 
-io = open("log.csv", "w");
-write_csv(io,ob)
+# io = open("log.csv", "w");
+# write_csv(io,ob)
 
 
 # FILLORKILL_FILLTYPE

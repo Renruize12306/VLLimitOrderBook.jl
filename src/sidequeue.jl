@@ -1,4 +1,5 @@
-using Dates, Base, DataStructures
+using Dates, Base
+import DataStructures: SortedSet
 import Base: >, <, ==, !=, isless, <=, >=, !
 abstract type Comparable end
 
@@ -240,11 +241,7 @@ function pop_unmatched_order_withinfilter!(
 end
 
 using HTTP
-using WebSockets, Sockets, Serialization
-import WebSockets:Response, Request
-import DataStructures: Deque, Dict
-import VL_LimitOrderBook
-using VL_LimitOrderBook, Random, Dates, Test, DataStructures
+using VL_LimitOrderBook, Dates, Serialization
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 # Custom Serialization of a MyPriority instance

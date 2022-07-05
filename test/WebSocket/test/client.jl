@@ -1,12 +1,9 @@
 using HTTP
-using WebSockets
-import WebSockets:Response, Request
 using Dates
 using Sockets
 using Serialization
 
-import VL_LimitOrderBook
-using VL_LimitOrderBook, Random, Dates, Test
+using VL_LimitOrderBook, Random
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 
