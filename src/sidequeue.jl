@@ -1,4 +1,4 @@
-using Dates, Base
+using Dates, Base, Sockets
 import DataStructures: SortedSet
 import Base: >, <, ==, !=, isless, <=, >=, !
 abstract type Comparable end
@@ -257,11 +257,22 @@ function Serialization.serialize(s::AbstractSerializer, instance::MyPriority)
     Serialization.serialize(s, instance.port)
 end
 
+# depreciated - from HTTP v0.9.17
+# function _notify_all(set::SortedSet)
+#     HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
+#         io = IOBuffer()
+#         serialize(io, set)
+#         s = take!(io)
+#         write(ws, s)
+#     end
+# end
+
+# using HTTP v1.0.5
 function _notify_all(set::SortedSet)
     HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
         io = IOBuffer()
         serialize(io, set)
         s = take!(io)
-        write(ws, s)
+        Sockets.send(ws, s)
     end
 end
