@@ -1,6 +1,7 @@
 """
     submit_limit_order!(
         ob::OrderBook{Sz,Px,Oid,Aid},
+        uob::UnmatchedOrderBook{Sz,Px,Oid,Aid,Dt,Ip,Pt},
         orderid::Oid,
         side::OrderSide,
         limit_price::Real,

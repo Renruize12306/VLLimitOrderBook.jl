@@ -2,8 +2,10 @@ using HTTP
 using Dates
 using Sockets
 using Serialization
-
 using VL_LimitOrderBook
+
+# THIS SIMULATES BACKGROUND LOB/SERVER PROCESS
+# include("test/WebSocket/localserver.jl")
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 
@@ -35,7 +37,6 @@ end
 # end
 
 # using HTTP v1.0.5
-IPv4(0)
 server = HTTP.WebSockets.listen!("0.0.0.0", 8081) do ws
     println("Entering Loop")
     for msg in ws

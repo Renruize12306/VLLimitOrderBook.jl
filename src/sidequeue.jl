@@ -267,8 +267,16 @@ end
 #     end
 # end
 
+# Client
 # using HTTP v1.0.5
 function _notify_all(set::SortedSet)
+    # For remote server functionality (to be added later...)
+    # _PATH_TO_ROOT = pwd()
+    # _PATH_TO_CONFIG = joinpath(_PATH_TO_ROOT,"config")
+    # configuration_dictionary = TOML.parsefile(joinpath(_PATH_TO_CONFIG, "Configuration.toml"))
+    # host_ip_address = configuration_dictionary["server"]["host"]
+    # url = "ws://$(host_ip_address):8081"
+    # HTTP.WebSockets.open(url) do ws
     HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
         io = IOBuffer()
         serialize(io, set)
