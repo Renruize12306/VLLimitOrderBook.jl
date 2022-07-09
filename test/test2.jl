@@ -37,6 +37,10 @@ submit_limit_order!(ob,uob,10000,BUY_ORDER,100,5,10101)
 # market order
 # submit_market_order!(ob, BUY_ORDER, 5)
 
+# market order by funds
+# submit_market_order_byfunds!(ob, BUY_ORDER, 5.0) # if OrderSize::Int64, should match nothing and return back $5
+# submit_market_order_byfunds!(ob, BUY_ORDER, 100.0) # if OrderSize::Int64, should match 1 share and return back $0.9899978637695312
+
 # cancel order
 # submit_limit_order!(ob, uob, 111, SELL_ORDER, 99.009, 20, 101111)
 # cancel_order!(ob, 111, SELL_ORDER, 99.009)
