@@ -220,21 +220,30 @@ function _walk_order_book_byfunds!(
                 else 
                     # funds_left < (best_ord.size * best_ord.price) # Case 2: Market Order gets wiped out
                     # Return the difference: LO.size-MO.size back to the order book
-                    rem_match_size = floor(Sz, funds_left / best_ord.price) # return floor of funds_left/best_ord.price and convert to type Sz
-                    if iszero(rem_match_size)
-                        return_ord = copy_modify_size(best_ord, best_ord.size - rem_match_size)
-                        pushfirst!(price_queue, return_ord)
-                        # Add remainder to match list & decrement outstanding MO
-                        best_ord = copy_modify_size(best_ord, rem_match_size)
-                        push!(order_match_lst, best_ord)
-                        funds_left -= (best_ord.size * best_ord.price)
-                        if !isempty(price_queue) # If price queue wasn't killed, put it back into the OneSidedBook
-                            _insert_queue!(sb, price_queue)
-                            _update_next_best_price!(sb)
-                        end
-                        # Return results
-                        return order_match_lst, funds_left
+
+                    if Sz <: AbstractFloat
+                        rem_match_size = funds_left / best_ord.price
                     end
+
+                    if Sz <: Integer
+                        rem_match_size = floor(Sz, funds_left / best_ord.price)
+                        # account for instance where user didn't submit high enough initial funds
+                        if iszero(rem_match_size)
+                            return_ord = copy_modify_size(best_ord, best_ord.size - rem_match_size)
+                            pushfirst!(price_queue, return_ord)
+                            # Add remainder to match list & decrement outstanding MO
+                            best_ord = copy_modify_size(best_ord, rem_match_size)
+                            push!(order_match_lst, best_ord)
+                            funds_left -= (best_ord.size * best_ord.price)
+                            if !isempty(price_queue) # If price queue wasn't killed, put it back into the OneSidedBook
+                                _insert_queue!(sb, price_queue)
+                                _update_next_best_price!(sb)
+                            end
+                            # Return results
+                            return order_match_lst, funds_left
+                        end
+                    end
+
                     return_ord = copy_modify_size(best_ord, best_ord.size - rem_match_size)
                     pushfirst!(price_queue, return_ord)
                     # Add remainder to match list & decrement outstanding MO

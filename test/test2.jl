@@ -6,8 +6,8 @@ using Base.Iterators: zip,cycle,take,filter
 # include("test/test2.jl")
 
 # Create (Deterministic) Limit Order Generator
-MyUOBType = UnmatchedOrderBook{Int64, Float64, Int64, Int64, DateTime, String, Integer} # define types for Order Size, Price, Transcation ID, Account ID, Order Creation Time, IP Address, Port
-MyLOBType = OrderBook{Int64, Float64, Int64, Int64} # define types for Order Size, Price, Order IDs, Account IDs
+MyUOBType = UnmatchedOrderBook{Float64, Float64, Int64, Int64, DateTime, String, Integer} # define types for Order Size, Price, Transcation ID, Account ID, Order Creation Time, IP Address, Port
+MyLOBType = OrderBook{Float64, Float64, Int64, Int64} # define types for Order Size, Price, Order IDs, Account IDs
 ob = MyLOBType() # Initialize empty order book
 uob = MyUOBType() # Initialize unmatched book process
 
@@ -31,15 +31,19 @@ end
 # Simple order submission examples
 
 # limit order
-submit_limit_order!(ob,uob,10000,SELL_ORDER,99.0,5,10101)
-submit_limit_order!(ob,uob,10000,BUY_ORDER,100,5,10101)
+# submit_limit_order!(ob,uob,10000,SELL_ORDER,99.0,5,10101)
+# submit_limit_order!(ob,uob,10000,BUY_ORDER,100,5,10101)
 
 # market order
 # submit_market_order!(ob, BUY_ORDER, 5)
 
 # market order by funds
-# submit_market_order_byfunds!(ob, BUY_ORDER, 5.0) # if OrderSize::Int64, should match nothing and return back $5
-# submit_market_order_byfunds!(ob, BUY_ORDER, 100.0) # if OrderSize::Int64, should match 1 share and return back $0.9899978637695312
+#   if OrderSize::Int64
+# submit_market_order_byfunds!(ob, BUY_ORDER, 5.0) # match nothing and return back $5
+# submit_market_order_byfunds!(ob, BUY_ORDER, 100.0) # match 1 share and return back ~$0.99
+#   if OrderSize::Float64
+# submit_market_order_byfunds!(ob, BUY_ORDER, 5.0) # match ~0.05 shares
+# submit_market_order_byfunds!(ob, BUY_ORDER, 100.0) # match ~1.01 shares
 
 # cancel order
 # submit_limit_order!(ob, uob, 111, SELL_ORDER, 99.009, 20, 101111)
