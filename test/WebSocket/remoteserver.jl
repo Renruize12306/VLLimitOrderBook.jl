@@ -1,12 +1,11 @@
 using HTTP
-using WebSockets
-import WebSockets:Response, Request
 using Dates
 using Sockets
 using Serialization
+using VL_LimitOrderBook
 
-import VL_LimitOrderBook
-using VL_LimitOrderBook, Random, Dates, Test
+# THIS SIMULATES BACKGROUND LOB/SERVER PROCESS
+# include("test/WebSocket/remoteserver.jl")
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 
@@ -22,16 +21,20 @@ function Serialization.deserialize(s::AbstractSerializer, ::Type{MyPriority})
     MyPriority(size,price,transcation_id,account_id,create_time,ip_address,port)
 end
 
-IPv4(0)
-# @async HTTP.WebSockets.listen("127.0.0.1", UInt16(8081)) do ws
-HTTP.WebSockets.listen("0.0.0.0", UInt16(8081)) do ws
-# HTTP.WebSockets.listen("127.0.0.1", UInt16(8081)) do ws
-    while !eof(ws)
-        data = readavailable(ws)
-        if length(data) > 0
-            ds = deserialize(IOBuffer(data))
+# using HTTP v1.0.5
+host_ip_address = Sockets.getipaddr()
+port = 8081
+server = HTTP.WebSockets.listen!(host_ip_address, port) do ws
+    println("Entering Loop")
+    for msg in ws
+        if msg == "close"
+            close(ws)
+        elseif length(msg) > 0
+            ds = deserialize(IOBuffer(msg))
             println(ds)
             println(typeof(ds))
         end
     end
 end
+
+# close(server)

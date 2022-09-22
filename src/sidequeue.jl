@@ -1,4 +1,5 @@
-using Dates, Base, DataStructures
+using Dates, Base, Sockets
+import DataStructures: SortedSet
 import Base: >, <, ==, !=, isless, <=, >=, !
 abstract type Comparable end
 
@@ -240,11 +241,7 @@ function pop_unmatched_order_withinfilter!(
 end
 
 using HTTP
-using WebSockets, Sockets, Serialization
-import WebSockets:Response, Request
-import DataStructures: Deque, Dict
-import VL_LimitOrderBook
-using VL_LimitOrderBook, Random, Dates, Test, DataStructures
+using VL_LimitOrderBook, Dates, Serialization
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 # Custom Serialization of a MyPriority instance
@@ -260,11 +257,30 @@ function Serialization.serialize(s::AbstractSerializer, instance::MyPriority)
     Serialization.serialize(s, instance.port)
 end
 
+# depreciated - from HTTP v0.9.17
+# function _notify_all(set::SortedSet)
+#     HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
+#         io = IOBuffer()
+#         serialize(io, set)
+#         s = take!(io)
+#         write(ws, s)
+#     end
+# end
+
+# Client
+# using HTTP v1.0.5
 function _notify_all(set::SortedSet)
+    # For remote server functionality (to be added later...)
+    # _PATH_TO_ROOT = pwd()
+    # _PATH_TO_CONFIG = joinpath(_PATH_TO_ROOT,"config")
+    # configuration_dictionary = TOML.parsefile(joinpath(_PATH_TO_CONFIG, "Configuration.toml"))
+    # host_ip_address = configuration_dictionary["server"]["host"]
+    # url = "ws://$(host_ip_address):8081"
+    # HTTP.WebSockets.open(url) do ws
     HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
         io = IOBuffer()
         serialize(io, set)
         s = take!(io)
-        write(ws, s)
+        Sockets.send(ws, s)
     end
 end
