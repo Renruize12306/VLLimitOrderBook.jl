@@ -5,7 +5,6 @@ using Serialization
 using VL_LimitOrderBook
 
 # THIS SIMULATES BACKGROUND LOB/SERVER PROCESS
-# include("test/WebSocket/localserver.jl")
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 
@@ -47,5 +46,3 @@ server = HTTP.WebSockets.listen!("0.0.0.0", 8081) do ws
         end
     end
 end
-
-# close(server)

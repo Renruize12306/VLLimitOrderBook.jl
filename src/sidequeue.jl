@@ -1,8 +1,19 @@
-using Dates, Base, Sockets
-import DataStructures: SortedSet
+using Dates, Base, DataStructures, Sockets
 import Base: >, <, ==, !=, isless, <=, >=, !
 abstract type Comparable end
 
+"""
+    Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}
+ 
+Prioirty with order-id type Oid, account-id type Aid, size type Sz, price type 
+px, date-time type Dt, ip address type Ip, port number type pt.
+    
+A `priority` is a self-defined data structure used when the user wants to submit an limit
+order but can not be matched immediately, then eveything will be stored into
+a queue. As soon as the opposite order in the market engine is available, the 
+order will be poped as the prioiry indicated.
+
+"""
 mutable struct Priority{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String, Pt<:Integer}   <: Comparable
     size::Sz
     price::Px
@@ -12,8 +23,8 @@ mutable struct Priority{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:Date
     ip_address::Ip
     port::Pt
     function Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
-        size::Sz, 
-        price::Px, 
+        size::Real, 
+        price::Real, 
         transcation_id::Oid, 
         account_id::Aid, 
         create_time::Dt, 
@@ -25,8 +36,15 @@ mutable struct Priority{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:Date
             )
     end
 end
-# price > size > timestamp > order id , account id will be ignored
 
+"""
+    <(x::Priority, y::Priority)
+
+The `<` operators defines the circumstances when x order in the unmatched order boook have lower 
+priority than y, the user can write prioirty itself, we will use this priority `price > size 
+> timestamp > order id, account id will be ignored` as a default option.
+
+"""
 function <(x::Priority, y::Priority) where Priority <: Comparable
     if x.price == y.price
         if x.size == y.size
@@ -43,6 +61,14 @@ function <(x::Priority, y::Priority) where Priority <: Comparable
     end
 end
 
+"""
+    >(x::Priority, y::Priority)
+
+The `>` operators defines the circumstances when x order in the unmatched order boook have higher 
+priority than y, the user can write prioirty itself, we will use this priority `price > size 
+> timestamp > order id, account id will be ignored` as a default option.
+
+"""
 function >(x::Priority, y::Priority) where Priority <: Comparable
     if x.price == y.price
         if x.size == y.size
@@ -76,7 +102,24 @@ function >=(x::Priority, y::Priority) where Priority <: Comparable
 end
 
 isless(x::Priority, y::Priority) = (x < y)
+
 import Base.@kwdef
+
+"""
+    OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}
+
+One-Sided UnmatchedBook with order-id type Oid, account-id type Aid, size type Sz, price type 
+px, date-time type Dt, ip address type Ip, port number type pt.
+
+OneSideUnmatchedBook is a one-sided book (i.e. :BID or :ASK) of order queues at
+varying prices.
+    
+Order queue are stored in SortedSet(.unmatched_book) indexed by Priority defined earlier
+
+The One side unmached order book keeps tracks of various statistics such as best price for best
+bid or ask price, number of orders in the book as well as total valume in the book
+
+"""
 @kwdef mutable struct OneSideUnmatchedBook{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String, Pt<:Integer}
     is_bid_side::Bool
     unmatched_book::SortedSet{Priority{Sz,Px,Oid,Aid,Dt,Ip,Pt}} = SortedSet{Priority{Sz,Px,Oid,Aid,Dt,Ip,Pt}}()
@@ -98,7 +141,7 @@ end
 """
     insert_unmatched_order!(sub::OneSideUnmatchedBook, new_order_priority::Priority)
     
-    unmatched order process into waiting list
+    unmatched order will be processed into waiting list
 
     For limit order,
         
@@ -124,7 +167,6 @@ Cancels Order `o`, or order with matching information from OrderBook.
 
 Provide `acct_id` if known to guarantee correct account tracking.
 """
-
 function insert_unmatched_order!(
     sub::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt},
     new_order_priority::Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}
@@ -158,6 +200,13 @@ end
     end
 end
 
+"""
+    pop_unmatched_order_withinfilter!(sub::OneSideUnmatchedBook, new_order_priority::Priority)
+
+If there is an order in the unmatched order book matched, it will pop the top order 
+    with the highest given prioiry.
+
+"""
 function pop_unmatched_order_withinfilter!(
     sub::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt},
     new_order_priority::Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}
@@ -178,9 +227,6 @@ function pop_unmatched_order_withinfilter!(
         poped_order = 0
         poped_volume = 0
         if !isaskunmatchedbook(sub)
-            # firstsc = searchsortedfirst(current_book, first(current_book))
-            # endsc = searchsortedfirst(current_book,new_order_priority_with_bool)
-            # for single_unmatched in inclusive(current_book,(endsc,firstsc))
             for single_unmatched in current_book
                 if (single_unmatched <= new_order_priority_with_bool && new_order_priority.size - single_unmatched.size >= 0)
                     price = -single_unmatched.price
@@ -195,38 +241,29 @@ function pop_unmatched_order_withinfilter!(
                         )
                     push!(res, single_unmatched_with_bool)
                     new_order_priority.size -= single_unmatched.size
-                    # println(new_order_priority.size)
                     poped_order += 1
                     poped_volume += single_unmatched.size
                     st = searchsortedfirst(current_book, single_unmatched)
                     delete!((current_book, st))
-                    # println(length(current_book))
                 else 
                     break
                 end
             end
         else
-            # firstsc = searchsortedfirst(current_book,new_order_priority_with_bool)
-            # endsc = searchsortedfirst(current_book, last(current_book))
-            # for single_unmatched in inclusive(current_book,(firstsc,endsc))
             for single_unmatched in current_book
-                # println(single_unmatched)
                 if (single_unmatched <= new_order_priority && new_order_priority.size - single_unmatched.size >= 0)
                     push!(res, single_unmatched)
                     new_order_priority.size -= single_unmatched.size
-                    # println(new_order_priority.size)
                     poped_order += 1
                     poped_volume += single_unmatched.size
                     st = searchsortedfirst(current_book, single_unmatched)
                     delete!((current_book, st))
-                    # println(length(current_book))
                 else 
                     break
                 end
             end
         end
         if !(isempty(res))
-            # temporarily output this in the console
             println("\n\nthis is matched order,\nthis place will perform notify \n\n")
             for re in res
                 println(re)
@@ -257,26 +294,13 @@ function Serialization.serialize(s::AbstractSerializer, instance::MyPriority)
     Serialization.serialize(s, instance.port)
 end
 
-# depreciated - from HTTP v0.9.17
-# function _notify_all(set::SortedSet)
-#     HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
-#         io = IOBuffer()
-#         serialize(io, set)
-#         s = take!(io)
-#         write(ws, s)
-#     end
-# end
+"""
+    _notify_all(set::SortedSet)
 
-# Client
-# using HTTP v1.0.5
+    This function will be used to broadcast the message as long as an order in unmatched_book matched
+
+"""
 function _notify_all(set::SortedSet)
-    # For remote server functionality (to be added later...)
-    # _PATH_TO_ROOT = pwd()
-    # _PATH_TO_CONFIG = joinpath(_PATH_TO_ROOT,"config")
-    # configuration_dictionary = TOML.parsefile(joinpath(_PATH_TO_CONFIG, "Configuration.toml"))
-    # host_ip_address = configuration_dictionary["server"]["host"]
-    # url = "ws://$(host_ip_address):8081"
-    # HTTP.WebSockets.open(url) do ws
     HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
         io = IOBuffer()
         serialize(io, set)

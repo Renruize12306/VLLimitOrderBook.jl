@@ -237,7 +237,7 @@ function process_file(
         price = parse(Float64, current_single_order[5])
         size = trunc(Int64, parse(Float64, current_single_order[4]))
         acct_id = parse(Int64, current_single_order[6])
-        submit_limit_order!(ob, orderid, side, price, size, acct_id)
+        submit_limit_order!(ob,uob, orderid, side, price, size, acct_id)
     end
 end
 
@@ -346,21 +346,3 @@ function Base.show(io::IO, ob::OrderBook)
     println(io, ob)
     return nothing
 end
-#=
-function _print_book_info(io::IO, uob::UnmatchedOrderBook{Sz, Px, Oid, Aid, Dt, Ip}) where {Sz, Px, Oid, Aid, Dt, Ip}
-    return print(
-        io,
-        "  ⋄ best bid/ask price: $(best_bid_ask(ob))\n",
-        "  ⋄ total bid/ask volume: $(volume_bid_ask(ob))\n",
-        "  ⋄ total bid/ask orders: $(n_orders_bid_ask(ob))\n",
-        "  ⋄ flags = $([ k => v for (k,v) in ob.flags])",
-    )
-end
-
-Base.print(io::IO, uob::UnmatchedOrderBook) = _print_book_info(io, uob)
-
-function Base.show(io::IO, ::MIME"text/plain", uob::UnmatchedOrderBook)
-    println(io, uob)
-    return nothing
-end
-=#

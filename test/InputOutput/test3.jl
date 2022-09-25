@@ -12,7 +12,7 @@ function process_file(io::IO, ob::OrderBook, file_name::String)
         price = parse(Float64, current_single_order[5])
         size = trunc(Int64, parse(Float64, current_single_order[4]))
         acct_id = parse(Int64, current_single_order[6])
-        submit_limit_order!(ob, orderid, side, price, size, acct_id)
+        submit_limit_order!(ob,uob, orderid, side, price, size, acct_id)
     end
 end
 

@@ -5,11 +5,15 @@ using Serialization
 using VL_LimitOrderBook
 
 # THIS SIMULATES BACKGROUND LOB/SERVER PROCESS
-# include("test/WebSocket/remoteserver.jl")
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 
-# Custom Deserialization of a Priority instance
+"""
+    Serialization.deserialize(s::AbstractSerializer, ::Type{MyPriority})
+
+This function will deserialize the Priority instance from the WebSockets.
+
+"""
 function Serialization.deserialize(s::AbstractSerializer, ::Type{MyPriority})
     size = Serialization.deserialize(s)
     price = Serialization.deserialize(s)
@@ -23,7 +27,7 @@ end
 
 # using HTTP v1.0.5
 host_ip_address = Sockets.getipaddr()
-port = 8081
+port = 8082
 server = HTTP.WebSockets.listen!(host_ip_address, port) do ws
     println("Entering Loop")
     for msg in ws
@@ -36,5 +40,3 @@ server = HTTP.WebSockets.listen!(host_ip_address, port) do ws
         end
     end
 end
-
-# close(server)

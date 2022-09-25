@@ -80,53 +80,53 @@ end
 # FILLORKILL_FILLTYPE
 
 # BUY_ORDER
-# submit_limit_order!(ob, 111, BUY_ORDER, 99, 60, 101111, FILLORKILL_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 60, 101111, FILLORKILL_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 15, 101111, FILLORKILL_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 5, 101111, FILLORKILL_FILLTYPE) # 5 matched
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.020, 15, 101111, FILLORKILL_FILLTYPE) # 15 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99, 60, 101111, FILLORKILL_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.012, 60, 101111, FILLORKILL_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.012, 15, 101111, FILLORKILL_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.012, 5, 101111, FILLORKILL_FILLTYPE) # 5 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.020, 15, 101111, FILLORKILL_FILLTYPE) # 15 matched
 
 # SELL_ORDER
-# submit_limit_order!(ob, 111, SELL_ORDER, 96, 80, 101111, FILLORKILL_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, SELL_ORDER, 96, 1, 101111, FILLORKILL_FILLTYPE) # 1 matched
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.981, 15, 101111, FILLORKILL_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.980, 15, 101111, FILLORKILL_FILLTYPE) # 15 matched
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 96, 80, 101111, FILLORKILL_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 96, 1, 101111, FILLORKILL_FILLTYPE) # 1 matched
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.981, 15, 101111, FILLORKILL_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.980, 15, 101111, FILLORKILL_FILLTYPE) # 15 matched
 =#
 
 #=
 # IMMEDIATEORCANCEL_FILLTYPE
 
-# submit_limit_order!(ob, 111, BUY_ORDER, 99, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # nothing changed
 # match other below order, the other disregard
 # BUY_ORDER
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.011, 5, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 5 matched
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.011, 15, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 5 matched
-# submit_limit_order!(ob, 111, BUY_ORDER,100, 1, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 1 matched
-# submit_limit_order!(ob, 111, BUY_ORDER,100, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 49 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.011, 5, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 5 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.011, 15, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 5 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER,100, 1, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 1 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER,100, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 49 matched
 
 # SELL_ORDER
-# submit_limit_order!(ob, 111, SELL_ORDER, 99, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.985, 1, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 1 matched
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.985, 15, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 10 matched
-# submit_limit_order!(ob, 111, SELL_ORDER, 96, 10, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 10 matched
-# submit_limit_order!(ob, 111, SELL_ORDER, 96, 45, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 42 matched
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 99, 60, 101111, IMMEDIATEORCANCEL_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.985, 1, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 1 matched
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.985, 15, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 10 matched
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 96, 10, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 10 matched
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 96, 45, 101111, IMMEDIATEORCANCEL_FILLTYPE) # 42 matched
 =#
 
 # Default fill type
 #=
 # VANILLA_FILLTYPE
 
-# submit_limit_order!(ob, 111, BUY_ORDER, 98.991, 20, 101111) # add to bid book 20
-# submit_limit_order!(ob, 111, SELL_ORDER, 99.009, 20, 101111) # add to ask book 20
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 98.991, 20, 101111) # add to bid book 20
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 99.009, 20, 101111) # add to ask book 20
 
 
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.011, 5, 101111) # matched ASK 5
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.011, 20, 101111) # matched ASK 20
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.025, 50, 101111) # matched ASK 25, add Bid 25
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.011, 5, 101111) # matched ASK 5
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.011, 20, 101111) # matched ASK 20
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.025, 50, 101111) # matched ASK 25, add Bid 25
 
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.985, 46, 101111) # matched BID 46
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.985, 15, 101111) # matched BID 10, add Ask 5
-# submit_limit_order!(ob, 111, SELL_ORDER, 96, 55, 101111) # matched BID 52, add Ask 3
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.985, 46, 101111) # matched BID 46
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.985, 15, 101111) # matched BID 10, add Ask 5
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 96, 55, 101111) # matched BID 52, add Ask 3
 =#
 
 
@@ -164,15 +164,15 @@ end
 # ALLORNONE_FILLTYPE testing
 
 # BUY_ORDER
-# submit_limit_order!(ob, 111, BUY_ORDER, 99, 60, 101111, ALLORNONE_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 60, 101111, ALLORNONE_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 15, 101111, ALLORNONE_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 5, 101111, ALLORNONE_FILLTYPE) # 5 matched
-# submit_limit_order!(ob, 111, BUY_ORDER, 99.020, 15, 101111, ALLORNONE_FILLTYPE) # 15 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99, 60, 101111, ALLORNONE_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.012, 60, 101111, ALLORNONE_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.012, 15, 101111, ALLORNONE_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.012, 5, 101111, ALLORNONE_FILLTYPE) # 5 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.020, 15, 101111, ALLORNONE_FILLTYPE) # 15 matched
 
 # SELL_ORDER
-# submit_limit_order!(ob, 111, SELL_ORDER, 96, 80, 101111, ALLORNONE_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, SELL_ORDER, 96, 1, 101111, ALLORNONE_FILLTYPE) # 1 matched
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.981, 15, 101111, ALLORNONE_FILLTYPE) # nothing changed
-# submit_limit_order!(ob, 111, SELL_ORDER, 98.980, 15, 101111, ALLORNONE_FILLTYPE) # 15 matched
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 96, 80, 101111, ALLORNONE_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 96, 1, 101111, ALLORNONE_FILLTYPE) # 1 matched
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.981, 15, 101111, ALLORNONE_FILLTYPE) # nothing changed
+# submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.980, 15, 101111, ALLORNONE_FILLTYPE) # 15 matched
 =#

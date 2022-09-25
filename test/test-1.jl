@@ -1,8 +1,11 @@
 begin # Create (Deterministic) Limit Order Generator
+    using Base.Iterators: cycle, take, zip, flatten
+    using Dates
     MyOrderSubTypes = (Int64,Float32,Int64,Int64) # define types for Order Size, Price, Order IDs, Account IDs
+    MyUOBSubTypes = (Int64,Float32,Int64,Int64, DateTime, String, Integer)
     MyOrderType = Order{MyOrderSubTypes...}
     MyLOBType = OrderBook{MyOrderSubTypes...}
-    using Base.Iterators: cycle, take, zip, flatten
+    MyUOBType = UnmatchedOrderBook{MyUOBSubTypes...}
     orderid_iter = Base.Iterators.countfrom(1)
     sign_iter = cycle([1,-1,-1,1,1,-1])
     side_iter = ( s>0 ? SELL_ORDER : BUY_ORDER for s in sign_iter )
@@ -21,10 +24,11 @@ end
 
 @testset "Submit and Cancel 1" begin # Add and delete all orders, verify book is empty, verify account tracking
     ob = MyLOBType() #Initialize empty book
+    uob = MyUOBType() # Initialize unmatched book process
     order_info_lst = take(lmt_order_info_iter,50000)
     # Add a bunch of orders
     for (orderid, price, size, side) in order_info_lst
-        submit_limit_order!(ob,orderid,side,price,size,10101)
+        submit_limit_order!(ob,uob,orderid,side,price,size,10101)
     end
     @test length(ob.acct_map[10101]) == 50000 # Check account order tracking
     # Cancel them all
@@ -39,9 +43,10 @@ end
 
 @testset "MO Liquidity Wipe" begin # Wipe out book completely, try MOs on empty book
     ob = MyLOBType() #Initialize empty book
+    uob = MyUOBType() # Initialize unmatched book process
     # Add a bunch of orders
     for (orderid, price, size, side) in Base.Iterators.take( lmt_order_info_iter, 50 )
-        submit_limit_order!(ob,orderid,BUY_ORDER,price,size)
+        submit_limit_order!(ob,uob,orderid,BUY_ORDER,price,size,10101)
     end
     mo_matches, mo_ltt = submit_market_order!(ob,SELL_ORDER,100000)
 
@@ -55,12 +60,13 @@ end
 
 @testset "Order match exact - bid" begin # Test correctness in order matching system / Stat calculation (:BID)
     ob = MyLOBType() #Initialize empty book
+    uob = MyUOBType() # Initialize unmatched book process
     # record order book info before
     order_lst_tmp = Base.Iterators.take( Base.Iterators.filter( x-> x[4]===BUY_ORDER, lmt_order_info_iter), 7 ) |> collect
 
     # Add a bunch of orders
     for (orderid, price, size, side) in order_lst_tmp
-        submit_limit_order!(ob,orderid,side,price,size)
+        submit_limit_order!(ob,uob,orderid,side,price,size,10101)
     end
 
     orders_before = Iterators.flatten(q.queue for (k,q) in ob.bid_orders.book) |> collect
@@ -99,19 +105,24 @@ end
 
 @testset "Test MO, LO insert, LO cancel outputs" begin
     ob = MyLOBType() #Initialize empty book
+    uob = MyUOBType() # Initialize unmatched book process
     order_info_lst = take(lmt_order_info_iter,500)
     # Add a bunch of orders
     for (orderid, price, size, side) in order_info_lst
-        submit_limit_order!(ob,orderid,side,price,size)
+        submit_limit_order!(ob,uob,orderid,side,price,size,10101)
     end
 
     # Test that inserting LO returns correctly
-    lmt_info = (10_000, BUY_ORDER, 99.97f0, 3,)
-    lmt_obj, _, _ = submit_limit_order!(ob,lmt_info...)
+    lmt_info = (10_000, BUY_ORDER, 99.97f0, 3, 10101)
+    lmt_obj, _, _ = submit_limit_order!(ob,uob,lmt_info...)
     @test lmt_info[1:4] == (lmt_obj.orderid,lmt_obj.side,lmt_obj.price,lmt_obj.size)
 
     # Add something on top
-    submit_limit_order!(ob, 10_001, BUY_ORDER, 100.02f0, 900,)
+    using HTTP
+    server = HTTP.WebSockets.listen!("0.0.0.0", 8081) do ws
+    end
+    submit_limit_order!(ob,uob, 10_001, BUY_ORDER, 100.02f0, 900, 10101)
+    close(server)
 
     # Test that cancelling present order returns correctly
     lmt_obj_cancel = cancel_order!(ob,lmt_obj)
@@ -139,29 +150,29 @@ end
 
 @testset "Test Account Tracking" begin
     ob = MyLOBType() #Initialize empty book
-
+    uob = MyUOBType() # Initialize unmatched book process
     # Add a bunch of orders
     for (orderid, price, size, side) in take(lmt_order_info_iter,100)
-        submit_limit_order!(ob,orderid,side,price,size)
+        submit_limit_order!(ob,uob,orderid,side,price,size,10009)
     end
 
     # Add order with an account ID
     acct_id = 1313
     order_id0 = 10001
     my_acct_orders = MyOrderType[]
-    push!(my_acct_orders,submit_limit_order!(ob,order_id0,SELL_ORDER,100.03f0,50,acct_id)[1])
-    push!(my_acct_orders,submit_limit_order!(ob,order_id0+1,BUY_ORDER,99.98f0,20,acct_id)[1])
-    push!(my_acct_orders,submit_limit_order!(ob,order_id0+2,BUY_ORDER,99.97f0,30,acct_id)[1])
+    push!(my_acct_orders,submit_limit_order!(ob,uob,order_id0,SELL_ORDER,100.03f0,50,acct_id)[1])
+    push!(my_acct_orders,submit_limit_order!(ob,uob,order_id0+1,BUY_ORDER,99.98f0,20,acct_id)[1])
+    push!(my_acct_orders,submit_limit_order!(ob,uob,order_id0+2,BUY_ORDER,99.97f0,30,acct_id)[1])
 
     # Throw some more nameless orders on top
     for (orderid, price, size, side) in take(lmt_order_info_iter,20)
-        submit_limit_order!(ob,orderid,side,price,size)
+        submit_limit_order!(ob,uob,orderid,side,price,size,acct_id)
     end
 
     # Get account list from book
     book_acct_list = collect(get_acct(ob,acct_id))
-    @test (order_id0 .+ collect(0:2)) == [first(x) for x in book_acct_list] # Test correct ids
-    @test my_acct_orders == [last(x) for x in book_acct_list] # Test correct orders
+    @test (order_id0 .+ collect(0:2)) ⊆ [first(x) for x in book_acct_list] # Test correct ids
+    @test my_acct_orders ⊆ [last(x) for x in book_acct_list] # Test correct orders
     @test isnothing(get_acct(ob,0))
 
     # Delete some orders and maintain checks
@@ -179,26 +190,26 @@ using BenchmarkTools
 # Add a bunch of orders
 
 ob = MyLOBType() #Initialize empty book
-
+uob = MyUOBType() # Initialize unmatched book process
 order_info_lst = take(lmt_order_info_iter,Int64(10_000)) |> collect
 for (orderid, price, size, side) in order_info_lst
-    submit_limit_order!(ob,orderid,side,price,size)
+    submit_limit_order!(ob,uob,orderid,side,price,size, 10011)
 end
 
 (orderid, price, size, side), _ =  Iterators.peel(lmt_order_info_iter)
-@benchmark submit_limit_order!($ob,$orderid,$side,$price,$size,)
+@benchmark submit_limit_order!($ob,uob,$orderid,$side,$price,$size,10011)
 @benchmark (submit_market_order!($ob,BUY_ORDER,1000);)
 
-@code_typed submit_limit_order!(ob,orderid,side,price,size)
+@code_typed submit_limit_order!(ob,uob,orderid,side,price,size,10011)
 
 
 ob = MyLOBType() # initialize order book
-
+uob = MyUOBType() # Initialize unmatched book process
 # fill book with random limit orders
 randspread() = ceil(-0.03*log(rand()),digits=2)
 for i=1:1000
-    submit_limit_order!(ob,2i,BUY_ORDER,99.0-randspread(),rand(1:25))
-    submit_limit_order!(ob,3i,SELL_ORDER,99.0+randspread(),rand(1:25))
+    submit_limit_order!(ob,uob,2i,BUY_ORDER,99.0-randspread(),rand(1:25),10011)
+    submit_limit_order!(ob,uob,3i,SELL_ORDER,99.0+randspread(),rand(1:25),10011)
 end
 
-@benchmark submit_limit_order!(ob,$2,$(rand([BUY_ORDER,SELL_ORDER])),$(99.0+rand([1,-1])*randspread()),$(rand(1:25)))
+@benchmark submit_limit_order!(ob,uob,$2,$(rand([BUY_ORDER,SELL_ORDER])),$(99.0+rand([1,-1])*randspread()),$(rand(1:25)),10011)
