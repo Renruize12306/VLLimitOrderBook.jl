@@ -43,7 +43,7 @@ function submit_limit_order!(
        !isnothing(best_ask) &&
        (limit_price >= best_ask) # order is bid (buy) and can cross
         cross_match_lst, remaining_size = _walk_order_book_bysize!(
-            ob.ask_orders, Sz(limit_size), Px(limit_price), fill_mode
+            ob.ask_orders, ob.acct_map, Sz(limit_size), Px(limit_price), fill_mode
         )
         new_order_priority = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
             Sz(limit_size), convert(Float64, limit_price), orderid, acct_id, now(),"0.0.0.0", 0
@@ -55,7 +55,7 @@ function submit_limit_order!(
            !isnothing(best_ask) &&
            (limit_price <= best_bid) # order is ask (sell) and can cross
         cross_match_lst, remaining_size = _walk_order_book_bysize!(
-            ob.bid_orders, Sz(limit_size), Px(limit_price), fill_mode
+            ob.bid_orders, ob.acct_map, Sz(limit_size), Px(limit_price), fill_mode
         )
         new_order_priority = Priority{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
             Sz(limit_size), convert(Float64, limit_price), orderid, acct_id, now(),"0.0.0.0", 0
@@ -124,6 +124,7 @@ end
 """
     _walk_order_book_bysize!(
         sb::OneSidedBook{Sz,Px,Oid,Aid},
+        acct_map::AcctMap{Sz,Px,Oid,Aid}
         order_size::Sz,
         limit_price::Union{Px,Nothing},
         order_mode::OrderTraits,
@@ -140,6 +141,7 @@ __Notes__
 """
 function _walk_order_book_bysize!(
     sb::OneSidedBook{Sz,Px,Oid,Aid},
+    acct_map::AcctMap{Sz,Px,Oid,Aid},
     order_size::Sz,
     limit_price::Union{Px,Nothing},
     order_mode::OrderTraits,
@@ -157,6 +159,10 @@ function _walk_order_book_bysize!(
         price_queue::OrderQueue = _popfirst_queue!(sb)
         if price_queue.total_volume[] <= shares_left # If entire queue is to be wiped out
             append!(order_match_lst, price_queue.queue) # Add all of the orders to the match list
+            while !isempty(price_queue)
+                best_ord::Order = popfirst!(price_queue)
+                _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, best_ord.size)
+            end
             shares_left -= price_queue.total_volume[] # decrement what's left to trade
         else
             while !isempty(price_queue) && !iszero(shares_left) # while not done and queue not empty
@@ -164,6 +170,7 @@ function _walk_order_book_bysize!(
                 if shares_left >= best_ord.size # Case 1: Limit order gets wiped out
                     # Add best_order to match list & decrement outstanding MO
                     push!(order_match_lst, best_ord)
+                    _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, best_ord.size)
                     shares_left -= best_ord.size
                 else
                     # shares_left < best_ord.size # Case 2: Market Order gets wiped out
@@ -173,6 +180,7 @@ function _walk_order_book_bysize!(
                     # Add remainder to match list & decrement outstanding MO
                     best_ord = copy_modify_size(best_ord, shares_left)
                     push!(order_match_lst, best_ord)
+                    _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, shares_left)
                     shares_left -= best_ord.size
                 end
             end
@@ -286,9 +294,9 @@ function submit_market_order!(
 ) where {Sz,Px,Oid,Aid}
     mo_size > zero(mo_size) || error("market order argument mo_size must be positive")
     if isbuy(side)
-        return _walk_order_book_bysize!(ob.ask_orders, Sz(mo_size), nothing, fill_mode)
+        return _walk_order_book_bysize!(ob.ask_orders, ob.acct_map, Sz(mo_size), nothing, fill_mode)
     else
-        return _walk_order_book_bysize!(ob.bid_orders, Sz(mo_size), nothing, fill_mode)
+        return _walk_order_book_bysize!(ob.bid_orders, ob.acct_map, Sz(mo_size), nothing, fill_mode)
     end
 end
 

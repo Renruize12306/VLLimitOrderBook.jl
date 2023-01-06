@@ -176,3 +176,6 @@ end
 # submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.981, 15, 101111, ALLORNONE_FILLTYPE) # nothing changed
 # submit_limit_order!(ob,uob, 111, SELL_ORDER, 98.980, 15, 101111, ALLORNONE_FILLTYPE) # 15 matched
 =#
+
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.012, 5, 101111, FILLORKILL_FILLTYPE) # 5 matched
+# submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.020, 15, 101111, FILLORKILL_FILLTYPE) # 15 matched

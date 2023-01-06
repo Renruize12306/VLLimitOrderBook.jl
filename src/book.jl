@@ -28,6 +28,19 @@ AcctMap{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer} = Dict{
     return nothing
 end
 
+@inline function _update_order_acct_map!(
+    acct_map::AcctMap{Sz,Px,Oid,Aid}, acct::Aid, orderid::Oid, size_to_delete::Real
+) where {Sz,Px,Oid,Aid}
+    if haskey(acct_map, acct) && haskey(acct_map[acct], orderid)
+        cur_order = acct_map[acct][orderid]
+        if (size_to_delete == cur_order.size)
+            delete!(acct_map[acct], orderid)
+        else
+            cur_order.size = cur_order.size - size_to_delete
+        end
+    end
+end
+
 @inline function _delete_order_acct_map!(
     acct_map::AcctMap{Sz,Px,Oid,Aid}, acct::Aid, orderid::Oid
 ) where {Sz,Px,Oid,Aid}

@@ -83,7 +83,7 @@ Order{Sz,Px,Pid,Aid}(side, size, price, orderid, order_mode [,acctid=nothing])
 where the types of `size` and `price` will be cast to the correct types.
 The `orderid` and `acctid` types will not be cast in order to avoid ambiguity.
 """
-struct Order{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
+mutable struct Order{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
     side::OrderSide
     size::Sz
     price::Px
