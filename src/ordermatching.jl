@@ -159,11 +159,12 @@ function _walk_order_book_bysize!(
         price_queue::OrderQueue = _popfirst_queue!(sb)
         if price_queue.total_volume[] <= shares_left # If entire queue is to be wiped out
             append!(order_match_lst, price_queue.queue) # Add all of the orders to the match list
+            temp_shares_left = shares_left -= price_queue.total_volume[]
             while !isempty(price_queue)
                 best_ord::Order = popfirst!(price_queue)
                 _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, best_ord.size)
             end
-            shares_left -= price_queue.total_volume[] # decrement what's left to trade
+            shares_left = temp_shares_left # decrement what's left to trade
         else
             while !isempty(price_queue) && !iszero(shares_left) # while not done and queue not empty
                 best_ord::Order = popfirst!(price_queue) # pop out best order
