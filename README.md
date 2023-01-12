@@ -1,4 +1,4 @@
-# VL_LimitOrderBook
+# VL_LimitOrderBook.jl
 `VL_LimitOrderBook.jl` is a package that simulates the dynamics of an [Order Book](https://www.investopedia.com/terms/o/order-book.asp). An order book is an electronic list of buy and sell orders for a specific security, which is used to help illustrate the dynamics for that security. This package was based on the previous work of [p-casgrain Philippe Casgrain](https://github.com/p-casgrain) and [dm13450 Dean](https://github.com/dm13450) in the package [LimitOrderBook.jl](https://github.com/p-casgrain/LimitOrderBook.jl).
 
 ## Overview
