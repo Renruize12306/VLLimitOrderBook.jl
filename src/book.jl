@@ -293,7 +293,7 @@ end
 ) where {Sz,Px,Oid,Aid}
     # Get book info
     max_depth = ob.flags[:PlotTickMax]
-    sb_info = VL_LimitOrderBook.book_depth_info(ob, max_depth)
+    sb_info = VLLimitOrderBook.book_depth_info(ob, max_depth)
     all_prices = [sb_info[:BID][:price]; sb_info[:ASK][:price]]
 
     println(io, "\n Order Book histogram (within $max_depth ticks of center):\n")

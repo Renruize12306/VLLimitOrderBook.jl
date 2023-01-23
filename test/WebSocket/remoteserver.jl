@@ -2,7 +2,7 @@ using HTTP
 using Dates
 using Sockets
 using Serialization
-using VL_LimitOrderBook
+using VLLimitOrderBook
 
 # THIS SIMULATES BACKGROUND LOB/SERVER PROCESS
 

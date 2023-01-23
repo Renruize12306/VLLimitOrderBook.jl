@@ -1,8 +1,8 @@
 #=
     put into main Function
 =#
-import VL_LimitOrderBook
-using VL_LimitOrderBook, Random
+import VLLimitOrderBook
+using VLLimitOrderBook, Random
 using Test
 using Base.Iterators: zip,cycle,take,filter
 

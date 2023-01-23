@@ -1,8 +1,8 @@
 #=
-    write process file into VL_LimitOrderBook into their function
+    write process file into VLLimitOrderBook into their function
 =#
-import VL_LimitOrderBook
-using VL_LimitOrderBook, Random
+import VLLimitOrderBook
+using VLLimitOrderBook, Random
 using Test
 using Base.Iterators: zip,cycle,take,filter
 

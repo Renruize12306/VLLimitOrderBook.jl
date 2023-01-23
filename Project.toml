@@ -1,4 +1,4 @@
-name = "VL_LimitOrderBook"
+name = "VLLimitOrderBook"
 uuid = "aaf583bd-e1f6-46ea-b02f-a6ceb51252d5"
 authors = ["ruize_ren <renruize1998@gmail.com>"]
 version = "0.1.0"

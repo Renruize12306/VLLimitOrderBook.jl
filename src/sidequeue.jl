@@ -278,7 +278,7 @@ function pop_unmatched_order_withinfilter!(
 end
 
 using HTTP
-using VL_LimitOrderBook, Dates, Serialization
+using VLLimitOrderBook, Dates, Serialization
 
 MyPriority = Priority{Int64, Float64, Int64, Int64, DateTime, String, Integer}
 # Custom Serialization of a MyPriority instance

@@ -1,4 +1,4 @@
-using VL_LimitOrderBook
+using VLLimitOrderBook
 
 
 function process_file(io::IO, ob::OrderBook, file_name::String)

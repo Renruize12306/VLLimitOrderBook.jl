@@ -1,4 +1,4 @@
-module VL_LimitOrderBook
+module VLLimitOrderBook
 using AVLTrees: AVLTree
 using Base: @kwdef
 using Printf
