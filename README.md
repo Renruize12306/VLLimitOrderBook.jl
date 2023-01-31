@@ -32,13 +32,11 @@ using Dates
 using Base.Iterators: zip, cycle, take
 
 # # Define the types for order size, price, transaction ID, account ID, order creation time, IP address, and port
-# MyUOBType = UnmatchedOrderBook{Float64, Float64, Int64, Int64, DateTime, String, Integer}
 # Define the types for order size, price, order ID, and account ID
 MyLOBType = OrderBook{Float64, Float64, Int64, Int64}
 
 # Initialize an empty order book and unmatched order book process
 ob = MyLOBType()
-# uob = MyUOBType()
 
 # Create a deterministic limit order generator
 orderid_iter = Base.Iterators.countfrom(1)

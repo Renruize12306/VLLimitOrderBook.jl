@@ -2,7 +2,7 @@ module VLLimitOrderBook
 using AVLTrees: AVLTree
 using Base: @kwdef
 using Printf
-include("sidequeue.jl")
+include("broadcast.jl")
 include("orderqueue.jl")
 include("sidebook.jl")
 include("book.jl")
@@ -10,9 +10,7 @@ include("ordermatching.jl")
 export BUY_ORDER, SELL_ORDER, VANILLA_FILLTYPE, IMMEDIATEORCANCEL_FILLTYPE, FILLORKILL_FILLTYPE
 export OrderBook, Order, OrderTraits, AcctMap, OrderSide
 export Monetary, AssetMismatch
-# export Priority, OneSideUnmatchedBook, UnmatchedOrderBook
 export submit_order!,
-    # insert_unmatched_order!,
     submit_limit_order!,
     cancel_order!,
     submit_market_order!,
