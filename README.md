@@ -31,14 +31,14 @@ using VLLimitOrderBook
 using Dates
 using Base.Iterators: zip, cycle, take
 
-# Define the types for order size, price, transaction ID, account ID, order creation time, IP address, and port
-MyUOBType = UnmatchedOrderBook{Float64, Float64, Int64, Int64, DateTime, String, Integer}
+# # Define the types for order size, price, transaction ID, account ID, order creation time, IP address, and port
+# MyUOBType = UnmatchedOrderBook{Float64, Float64, Int64, Int64, DateTime, String, Integer}
 # Define the types for order size, price, order ID, and account ID
 MyLOBType = OrderBook{Float64, Float64, Int64, Int64}
 
 # Initialize an empty order book and unmatched order book process
 ob = MyLOBType()
-uob = MyUOBType()
+# uob = MyUOBType()
 
 # Create a deterministic limit order generator
 orderid_iter = Base.Iterators.countfrom(1)
@@ -55,7 +55,7 @@ order_info_lst = take(lmt_order_info_iter, 6)
 
 # Submit limit orders
 for (orderid, price, size, side) in order_info_lst
-    submit_limit_order!(ob,uob,orderid,side,price,size,10101)
+    submit_limit_order!(ob,orderid,side,price,size,10101)
     print(orderid, ' ',side,' ',price,'\n')
 end
 ```
@@ -65,5 +65,5 @@ ob
 ```
 **An example to matching a limit order**
 ```julia
-submit_limit_order!(ob,uob, 111, BUY_ORDER, 99.012, 5, 101111, FILLORKILL_FILLTYPE)
+submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 5, 101111, FILLORKILL_FILLTYPE)
 ```

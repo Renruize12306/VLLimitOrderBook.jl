@@ -79,23 +79,23 @@ mutable struct OrderBook{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
     end
 end
 
-"""
-UnmatchedOrder{Sz, Px, Oid, Aid, Dt, Ip} 
+# """
+# UnmatchedOrder{Sz, Px, Oid, Aid, Dt, Ip} 
 
-An `UnmatchedOrder` is a data structure containing __limit orders__ represented as 
-objects of type `Order{Sz, Px, Oid, Aid, Dt, Ip} `.
+# An `UnmatchedOrder` is a data structure containing __limit orders__ represented as 
+# objects of type `Order{Sz, Px, Oid, Aid, Dt, Ip} `.
 
-"""
-mutable struct UnmatchedOrderBook{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String, Pt<:Integer}
-    bid_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt} # bid orders
-    ask_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt} # ask orders
-    function UnmatchedOrderBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}() where {Sz, Px, Oid, Aid, Dt, Ip, Pt}
-        return new{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
-            OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}(; is_bid_side=true),
-            OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}(; is_bid_side=false),
-        )
-    end
-end
+# """
+# mutable struct UnmatchedOrderBook{Sz<:Real, Px<:Real, Oid<:Integer, Aid<:Integer, Dt<:DateTime, Ip<:String, Pt<:Integer}
+#     bid_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt} # bid orders
+#     ask_unmatched_orders::OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt} # ask orders
+#     function UnmatchedOrderBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}() where {Sz, Px, Oid, Aid, Dt, Ip, Pt}
+#         return new{Sz, Px, Oid, Aid, Dt, Ip, Pt}(
+#             OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}(; is_bid_side=true),
+#             OneSideUnmatchedBook{Sz, Px, Oid, Aid, Dt, Ip, Pt}(; is_bid_side=false),
+#         )
+#     end
+# end
 
 
 """
