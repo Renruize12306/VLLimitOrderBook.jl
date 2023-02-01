@@ -40,16 +40,12 @@ function submit_limit_order!(
        isbuy(side) &&
        !isnothing(best_ask) &&
        (limit_price >= best_ask) # order is bid (buy) and can cross
-        cross_match_lst, remaining_size = _walk_order_book_bysize!(
-            ob.ask_orders, ob.acct_map, Sz(limit_size), Px(limit_price), fill_mode
-        )
+       error("The orderbook should not be crossed, the buy limit order should not exceed the minimum ASK price")
     elseif allows_cross(fill_mode) &&
            !isbuy(side) &&
            !isnothing(best_ask) &&
            (limit_price <= best_bid) # order is ask (sell) and can cross
-        cross_match_lst, remaining_size = _walk_order_book_bysize!(
-            ob.bid_orders, ob.acct_map, Sz(limit_size), Px(limit_price), fill_mode
-        )
+        error("The orderbook should not be crossed, the sell limit order should not exceed the minimum BID price")
     else # order can or does not cross, return empty matches
         cross_match_lst, remaining_size = Vector{Order{Sz,Px,Oid,Aid}}(), Sz(limit_size)
     end

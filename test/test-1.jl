@@ -111,13 +111,6 @@ end
     lmt_obj, _, _ = submit_limit_order!(ob,lmt_info...)
     @test lmt_info[1:4] == (lmt_obj.orderid,lmt_obj.side,lmt_obj.price,lmt_obj.size)
 
-    # Add something on top
-    using HTTP
-    server = HTTP.WebSockets.listen!("0.0.0.0", 8081) do ws
-    end
-    submit_limit_order!(ob, 10_001, BUY_ORDER, 100.02f0, 900, 10101)
-    close(server)
-
     # Test that cancelling present order returns correctly
     lmt_obj_cancel = cancel_order!(ob,lmt_obj)
     @test lmt_obj_cancel == lmt_obj
@@ -132,12 +125,12 @@ end
     @test mo_ltt == 0
 
     mo_match_list, mo_ltt = submit_market_order!(ob,BUY_ORDER,797+13)
-    @test length(mo_match_list) == 128
-    @test mo_ltt == 13
+    @test length(mo_match_list) == 137
+    @test mo_ltt == 0
 
     mo_match_list, mo_ltt = submit_market_order!(ob,BUY_ORDER,13)
-    @test isempty(mo_match_list)
-    @test mo_ltt == 13
+    @test !isempty(mo_match_list)
+    @test mo_ltt == 0
 
 
 end
@@ -177,30 +170,30 @@ end
 
 end
 
-import Pkg;
-Pkg.add("BenchmarkTools")
-using BenchmarkTools
-# Add a bunch of orders
+# import Pkg;
+# Pkg.add("BenchmarkTools")
+# using BenchmarkTools
+# # Add a bunch of orders
 
-ob = MyLOBType() #Initialize empty book
-order_info_lst = take(lmt_order_info_iter,Int64(10_000)) |> collect
-for (orderid, price, size, side) in order_info_lst
-    submit_limit_order!(ob,orderid,side,price,size, 10011)
-end
+# ob = MyLOBType() #Initialize empty book
+# order_info_lst = take(lmt_order_info_iter,Int64(10_000)) |> collect
+# for (orderid, price, size, side) in order_info_lst
+#     submit_limit_order!(ob,orderid,side,price,size, 10011)
+# end
 
-(orderid, price, size, side), _ =  Iterators.peel(lmt_order_info_iter)
-@benchmark submit_limit_order!($ob,$orderid,$side,$price,$size,10011)
-@benchmark (submit_market_order!($ob,BUY_ORDER,1000);)
+# (orderid, price, size, side), _ =  Iterators.peel(lmt_order_info_iter)
+# @benchmark submit_limit_order!($ob,$orderid,$side,$price,$size,10011)
+# @benchmark (submit_market_order!($ob,BUY_ORDER,1000);)
 
-@code_typed submit_limit_order!(ob,orderid,side,price,size,10011)
+# @code_typed submit_limit_order!(ob,orderid,side,price,size,10011)
 
 
-ob = MyLOBType() # initialize order book
-# fill book with random limit orders
-randspread() = ceil(-0.03*log(rand()),digits=2)
-for i=1:1000
-    submit_limit_order!(ob,2i,BUY_ORDER,99.0-randspread(),rand(1:25),10011)
-    submit_limit_order!(ob,3i,SELL_ORDER,99.0+randspread(),rand(1:25),10011)
-end
+# ob = MyLOBType() # initialize order book
+# # fill book with random limit orders
+# randspread() = ceil(-0.03*log(rand()),digits=2)
+# for i=1:1000
+#     submit_limit_order!(ob,2i,BUY_ORDER,99.0-randspread(),rand(1:25),10011)
+#     submit_limit_order!(ob,3i,SELL_ORDER,99.0+randspread(),rand(1:25),10011)
+# end
 
-@benchmark submit_limit_order!(ob,$2,$(rand([BUY_ORDER,SELL_ORDER])),$(99.0+rand([1,-1])*randspread()),$(rand(1:25)),10011)
+# @benchmark submit_limit_order!(ob,$2,$(rand([BUY_ORDER,SELL_ORDER])),$(99.0+rand([1,-1])*randspread()),$(rand(1:25)),10011)

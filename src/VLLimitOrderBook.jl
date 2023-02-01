@@ -25,6 +25,5 @@ export submit_order!,
     get_acct,
     write_csv,
     process_file,
-    order_types,
-    pop_unmatched_order_withinfilter!
+    order_types
 end
