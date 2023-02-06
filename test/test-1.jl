@@ -1,6 +1,7 @@
+using AVLTrees: AVLTree
+using Base.Iterators: zip,cycle,take,filter, flatten
+using Dates
 begin # Create (Deterministic) Limit Order Generator
-    using Base.Iterators: cycle, take, zip, flatten
-    using Dates
     MyOrderSubTypes = (Int64,Float32,Int64,Int64) # define types for Order Size, Price, Order IDs, Account IDs
     MyOrderType = Order{MyOrderSubTypes...}
     MyLOBType = OrderBook{MyOrderSubTypes...}
@@ -37,7 +38,8 @@ end
     @test isempty(ob.ask_orders)
     @test isempty(ob.acct_map[10101])
 end
-
+# Market order side should be discussed
+# Limit order to match market order or just submit all to the brokers
 @testset "MO Liquidity Wipe" begin # Wipe out book completely, try MOs on empty book
     ob = MyLOBType() #Initialize empty book
     # Add a bunch of orders
@@ -97,7 +99,7 @@ end
     @test mo_ltt == 0
 end
 
-
+# Market order side should be discussed
 @testset "Test MO, LO insert, LO cancel outputs" begin
     ob = MyLOBType() #Initialize empty book
     order_info_lst = take(lmt_order_info_iter,500)
@@ -110,7 +112,7 @@ end
     lmt_info = (10_000, BUY_ORDER, 99.97f0, 3, 10101)
     lmt_obj, _, _ = submit_limit_order!(ob,lmt_info...)
     @test lmt_info[1:4] == (lmt_obj.orderid,lmt_obj.side,lmt_obj.price,lmt_obj.size)
-
+  
     # Test that cancelling present order returns correctly
     lmt_obj_cancel = cancel_order!(ob,lmt_obj)
     @test lmt_obj_cancel == lmt_obj
@@ -131,17 +133,19 @@ end
     mo_match_list, mo_ltt = submit_market_order!(ob,BUY_ORDER,13)
     @test !isempty(mo_match_list)
     @test mo_ltt == 0
+    @test 13 == sum(x.size for x in mo_match_list)
 
 
 end
 
 @testset "Test Account Tracking" begin
     ob = MyLOBType() #Initialize empty book
+
     # Add a bunch of orders
     for (orderid, price, size, side) in take(lmt_order_info_iter,100)
-        submit_limit_order!(ob,orderid,side,price,size,10009)
+        submit_limit_order!(ob,orderid,side,price,size)
     end
-
+    
     # Add order with an account ID
     acct_id = 1313
     order_id0 = 10001
@@ -152,13 +156,13 @@ end
 
     # Throw some more nameless orders on top
     for (orderid, price, size, side) in take(lmt_order_info_iter,20)
-        submit_limit_order!(ob,orderid,side,price,size,acct_id)
+        submit_limit_order!(ob,orderid,side,price,size)
     end
 
     # Get account list from book
     book_acct_list = collect(get_acct(ob,acct_id))
-    @test (order_id0 .+ collect(0:2)) ⊆ [first(x) for x in book_acct_list] # Test correct ids
-    @test my_acct_orders ⊆ [last(x) for x in book_acct_list] # Test correct orders
+    @test (order_id0 .+ collect(0:2)) == [first(x) for x in book_acct_list] # Test correct ids
+    @test my_acct_orders == [last(x) for x in book_acct_list] # Test correct orders
     @test isnothing(get_acct(ob,0))
 
     # Delete some orders and maintain checks
@@ -170,30 +174,30 @@ end
 
 end
 
-# import Pkg;
-# Pkg.add("BenchmarkTools")
-# using BenchmarkTools
-# # Add a bunch of orders
+import Pkg;
+Pkg.add("BenchmarkTools")
+using BenchmarkTools
+# Add a bunch of orders
 
-# ob = MyLOBType() #Initialize empty book
-# order_info_lst = take(lmt_order_info_iter,Int64(10_000)) |> collect
-# for (orderid, price, size, side) in order_info_lst
-#     submit_limit_order!(ob,orderid,side,price,size, 10011)
-# end
+ob = MyLOBType() #Initialize empty book
+order_info_lst = take(lmt_order_info_iter,Int64(10_000)) |> collect
+for (orderid, price, size, side) in order_info_lst
+    submit_limit_order!(ob,orderid,side,price,size, 10011)
+end
 
-# (orderid, price, size, side), _ =  Iterators.peel(lmt_order_info_iter)
-# @benchmark submit_limit_order!($ob,$orderid,$side,$price,$size,10011)
-# @benchmark (submit_market_order!($ob,BUY_ORDER,1000);)
+(orderid, price, size, side), _ =  Iterators.peel(lmt_order_info_iter)
+@benchmark submit_limit_order!($ob,$orderid,$side,$price,$size,10011)
+@benchmark (submit_market_order!($ob,BUY_ORDER,1000);)
 
-# @code_typed submit_limit_order!(ob,orderid,side,price,size,10011)
+@code_typed submit_limit_order!(ob,orderid,side,price,size,10011)
 
 
-# ob = MyLOBType() # initialize order book
-# # fill book with random limit orders
-# randspread() = ceil(-0.03*log(rand()),digits=2)
-# for i=1:1000
-#     submit_limit_order!(ob,2i,BUY_ORDER,99.0-randspread(),rand(1:25),10011)
-#     submit_limit_order!(ob,3i,SELL_ORDER,99.0+randspread(),rand(1:25),10011)
-# end
+ob = MyLOBType() # initialize order book
+# fill book with random limit orders
+randspread() = ceil(-0.03*log(rand()),digits=2)
+for i=1:1000
+    submit_limit_order!(ob,2i,BUY_ORDER,99.0-randspread(),rand(1:25),10011)
+    submit_limit_order!(ob,3i,SELL_ORDER,99.0+randspread(),rand(1:25),10011)
+end
 
-# @benchmark submit_limit_order!(ob,$2,$(rand([BUY_ORDER,SELL_ORDER])),$(99.0+rand([1,-1])*randspread()),$(rand(1:25)),10011)
+@benchmark submit_limit_order!(ob,$2,$(rand([BUY_ORDER,SELL_ORDER])),$(99.0+rand([1,-1])*randspread()),$(rand(1:25)),10011)

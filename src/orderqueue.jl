@@ -26,10 +26,10 @@ allows_book_insert(mode::OrderTraits) = !isimmediateorcancel(mode)
 allows_partial_fill(mode::OrderTraits) = !isallornone(mode)
 allows_cross(mode::OrderTraits) = mode.allow_cross
 
-const VANILLA_FILLTYPE = OrderTraits(false,false,true)
-const FILLORKILL_FILLTYPE = OrderTraits(true,true,true)
-const IMMEDIATEORCANCEL_FILLTYPE = OrderTraits(false,true,true)
-# const ALLORNONE_ORDER = OrderTraits(true,false,true)
+const VANILLA_FILLTYPE = OrderTraits(false,false,false) # GTC Good-Til-Canceled Order
+const FILLORKILL_FILLTYPE = OrderTraits(true,true,false)
+const IMMEDIATEORCANCEL_FILLTYPE = OrderTraits(false,true,false)
+const ALLORNONE_FILLTYPE = OrderTraits(true,true,false)
 
 
 Base.string(x::OrderTraits) =
