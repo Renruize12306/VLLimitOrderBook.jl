@@ -1,2 +1,4 @@
 *.cov
 *.info
+*.csv
+*.txt

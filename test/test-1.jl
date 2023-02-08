@@ -174,30 +174,144 @@ end
 
 end
 
-import Pkg;
-Pkg.add("BenchmarkTools")
-using BenchmarkTools
-# Add a bunch of orders
+@testset "Test Bid/Ask Volume & Number of Orders Checking" begin
+    ob = MyLOBType() #Initialize empty book
+    order_lst_tmp = Base.Iterators.take( lmt_order_info_iter, 10 ) |> collect
 
-ob = MyLOBType() #Initialize empty book
-order_info_lst = take(lmt_order_info_iter,Int64(10_000)) |> collect
-for (orderid, price, size, side) in order_info_lst
-    submit_limit_order!(ob,orderid,side,price,size, 10011)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_lst_tmp
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    actual_vol = volume_bid_ask(ob)
+    expected_bid_vol = 42
+    expected_ask_vol = 28
+    @test (expected_bid_vol, expected_ask_vol) == actual_vol
+
+    actual_num = n_orders_bid_ask(ob)
+    expected_bid_num = 5
+    expected_ask_num = 5
+    @test (expected_bid_num, expected_ask_num) == actual_num
 end
 
-(orderid, price, size, side), _ =  Iterators.peel(lmt_order_info_iter)
-@benchmark submit_limit_order!($ob,$orderid,$side,$price,$size,10011)
-@benchmark (submit_market_order!($ob,BUY_ORDER,1000);)
-
-@code_typed submit_limit_order!(ob,orderid,side,price,size,10011)
-
-
-ob = MyLOBType() # initialize order book
-# fill book with random limit orders
-randspread() = ceil(-0.03*log(rand()),digits=2)
-for i=1:1000
-    submit_limit_order!(ob,2i,BUY_ORDER,99.0-randspread(),rand(1:25),10011)
-    submit_limit_order!(ob,3i,SELL_ORDER,99.0+randspread(),rand(1:25),10011)
+@testset "Test Order Types Checking" begin
+    ob = MyLOBType() #Initialize empty book
+    expected_types = (Int64, Float32, Int64, Int64)
+    @test order_types(ob) == expected_types
+    @test order_types(ob.bid_orders) == expected_types
+    @test order_types(ob.ask_orders) == expected_types
+    @test order_types(ob.ask_orders) == expected_types
+    # Add an order
+    lmt_info = (10_000, BUY_ORDER, 99.97f0, 3, 10101)
+    lmt_obj, _, _ = submit_limit_order!(ob,lmt_info...)
+    @test order_types(lmt_obj) == expected_types
 end
 
-@benchmark submit_limit_order!(ob,$2,$(rand([BUY_ORDER,SELL_ORDER])),$(99.0+rand([1,-1])*randspread()),$(rand(1:25)),10011)
+@testset "Test Bid/Ask Order Iterators" begin
+    ob = MyLOBType() #Initialize empty book
+    order_lst_tmp = Base.Iterators.take( lmt_order_info_iter, 10 ) |> collect
+
+    # Add a bunch of orders
+    bid_submitted_orders = MyOrderType[]
+    ask_submitted_orders = MyOrderType[]
+    for (orderid, price, size, side) in order_lst_tmp
+        lmt_obj, _, _ = submit_limit_order!(ob,orderid,side,price,size,10101)
+        if (side == SELL_ORDER)
+            push!(ask_submitted_orders, lmt_obj)
+        else 
+            push!(bid_submitted_orders, lmt_obj)
+        end
+    end
+    for (i, item) in enumerate(ask_orders(ob))
+        @test item ∈ ask_submitted_orders
+    end
+    for (i, item) in enumerate(bid_orders(ob))
+        @test item ∈ bid_submitted_orders
+    end
+end
+
+@testset "Test Write & Read with CSV file" begin
+    ob = MyLOBType()
+    order_info_lst = take(lmt_order_info_iter,6)
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+
+    file_name = "log_ob.csv"
+    io_original = open(file_name, "w");
+    write_to_csv(io_original,ob)
+
+    ob_test = MyLOBType()
+    if (isfile(file_name))
+        io_read = open(file_name, "r");
+        read_from_csv(io_read, ob_test, file_name)
+    end
+    close(io_read)
+    file_name = "log_ob_test.csv"
+    io_test = open(file_name, "w");
+    write_to_csv(io_test,ob_test)
+    # compare those two CSV files
+    contents1 = readlines(io_original)
+    contents2 = readlines(io_test)
+    close(io_original)
+    close(io_test)
+    #
+    @test contents1 == contents2
+    
+end
+
+@testset "Test clear_book Function" begin
+    ob = MyLOBType()
+    order_info_lst = take(lmt_order_info_iter,10)
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    cleared_bids, cleared_asks = clear_book!(ob, 3)
+    @test length(cleared_bids) == 0
+    @test length(cleared_asks) == 0
+    cleared_bids, cleared_asks = clear_book!(ob, 2)
+    @test length(cleared_bids) == 0
+    @test length(cleared_asks) == 1
+    cleared_bids, cleared_asks = clear_book!(ob, 1)
+    @test length(cleared_bids) == 2
+    @test length(cleared_asks) == 2
+end
+
+@testset "Test Base Show Function" begin
+    ob = MyLOBType()
+    file_name = "base_show.txt"
+    io = open(file_name, "w");
+    Base.show(io,"text/plain", ob)
+    order_info_lst = take(lmt_order_info_iter,2)
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    Base.show(io, ob)
+    Base.show(io,"text/plain", ob)
+    close(io)
+    expected_output = "OrderBook{Sz=Int64,Px=Float32,Oid=Int64,Aid=Int64} with properties:\n"*
+    "  ⋄ best bid/ask price: (nothing, nothing)\n"*
+    "  ⋄ total bid/ask volume: (0, 0)\n"*
+    "  ⋄ total bid/ask orders: (0, 0)\n"*
+    "  ⋄ flags = [:PlotTickMax => 5]"*
+    "\n Order Book histogram (within 5 ticks of center):\n"*
+    "\n    :BID   <empty>\n\n"*
+    "\n    :ASK   <empty>\n"*
+    "OrderBook{Sz=Int64,Px=Float32,Oid=Int64,Aid=Int64} with properties:\n"*
+    "  ⋄ best bid/ask price: $(best_bid_ask(ob))\n"*
+    "  ⋄ total bid/ask volume: $(volume_bid_ask(ob))\n"*
+    "  ⋄ total bid/ask orders: $(n_orders_bid_ask(ob))\n"*
+    "  ⋄ flags = $([ k => v for (k,v) in ob.flags])\n"*
+    "OrderBook{Sz=Int64,Px=Float32,Oid=Int64,Aid=Int64} with properties:\n"*
+    "  ⋄ best bid/ask price: $(best_bid_ask(ob))\n"*
+    "  ⋄ total bid/ask volume: $(volume_bid_ask(ob))\n"*
+    "  ⋄ total bid/ask orders: $(n_orders_bid_ask(ob))\n"*
+    "  ⋄ flags = $([ k => v for (k,v) in ob.flags])\n"*
+    "\n Order Book histogram (within 5 ticks of center):\n"*
+    "\n                                                       "*
+    "\n   :BID 99.98 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 5  \n"*
+    "                                                       \n"*
+    "\n                                                        \n"*
+    "   :ASK 100.03 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 2  \n                                                        \n"
+    output_contents = read("base_show.txt", String)
+    @test output_contents != expected_output
+end

@@ -23,7 +23,7 @@ export submit_order!,
     bid_orders,
     ask_orders,
     get_acct,
-    write_csv,
-    process_file,
+    write_to_csv,
+    read_from_csv,
     order_types
 end

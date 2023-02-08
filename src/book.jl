@@ -91,16 +91,16 @@ function clear_book!(ob::OrderBook{Sz,Px,Oid,Aid}, n_keep::Int64=10) where {Sz,P
     (n_keep < 0) && error("$n_keep should be non-negative")
     # clear the bids
     cleared_bids = Vector{Order{Sz,Px,Oid,Aid}}()
-    bids_to_clear = [abs(k) for (k, v) in ob.bid_orders.book]
-    bids_to_clear = x -> last(x, max(length(x) - n_keep, 0))(bids_to_clear) # clear all but last n
+    all_bids = [abs(k) for (k, v) in ob.bid_orders.book]
+    bids_to_clear = last(all_bids, max(length(all_bids) - n_keep, 0))
     for px in bids_to_clear
         cleared_queue = _popat_queue!(ob.bid_orders, px)
         append!(cleared_bids, cleared_queue.queue)
     end
     # clear the asks
     cleared_asks = Vector{Order{Sz,Px,Oid,Aid}}()
-    asks_to_clear = [abs(k) for (k, v) in ob.ask_orders.book]
-    asks_to_clear = x -> first(x, max(length(x) - n_keep, 0))(asks_to_clear) # clear all but last n
+    all_asks = [abs(k) for (k, v) in ob.ask_orders.book]
+    asks_to_clear = last(all_asks, max(length(all_asks) - n_keep, 0))
     for px in asks_to_clear
         cleared_queue = _popat_queue!(ob.ask_orders, px)
         append!(cleared_asks, cleared_queue.queue)
@@ -213,13 +213,13 @@ bid_orders(ob::OrderBook) = Iterators.flatten(q for (k,q) in ob.bid_orders.book)
 
 
 """
-    process_file(
+read_from_csv(
         io::IO, ob::OrderBook, file_name::String
     )
 
 writing csv file to ob::OrderBook system
 """
-function process_file(
+function read_from_csv(
     io::IO, ob::OrderBook, file_name::String
 )
     io = open(file_name, "r");
@@ -232,13 +232,13 @@ function process_file(
         price = parse(Float64, current_single_order[5])
         size = trunc(Int64, parse(Float64, current_single_order[4]))
         acct_id = parse(Int64, current_single_order[6])
-        submit_limit_order!(ob,uob, orderid, side, price, size, acct_id)
+        submit_limit_order!(ob, orderid, side, price, size, acct_id)
     end
 end
 
 
 """
-    write_csv(
+write_to_csv(
         io::IO,
         ob::OrderBook;
         row_formatter = _order_to_csv,
@@ -249,7 +249,7 @@ Write OrderBook `ob` to an IO stream into `csv` format where each row correspond
 The formatting for each row is given by the function argument `row_formatter(::Order)::String`.
 The `csv` header can be provided as an argument where setting it to `nothing` writes no header.
 """
-function write_csv(
+function write_to_csv(
     io::IO, ob::OrderBook; row_formatter=_order_to_csv, header="TRD,ID,SIDE,SIZE,PX,ACCT"
 )
     cnt = 0
