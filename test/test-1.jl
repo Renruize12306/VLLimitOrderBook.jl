@@ -29,6 +29,9 @@ end
         submit_limit_order!(ob,orderid,side,price,size,10101)
     end
     @test length(ob.acct_map[10101]) == 50000 # Check account order tracking
+    first_order = collect(take(lmt_order_info_iter,1))[1]
+    poped_expected_nothing = cancel_order!(ob, first_order[1]+1, first_order[4],first_order[2])
+    @test isnothing(poped_expected_nothing)
     # Cancel them all
     for (orderid, price, size, side) in order_info_lst
         cancel_order!(ob,orderid,side,price)
@@ -37,6 +40,22 @@ end
     @test isempty(ob.bid_orders)
     @test isempty(ob.ask_orders)
     @test isempty(ob.acct_map[10101])
+end
+@testset "Test cancel empty orders" begin
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    @test length(ob.acct_map[10101]) == 6 # Check account order tracking
+    fourth_order = collect(take(lmt_order_info_iter,4))[4]
+    touple = (fourth_order[1], fourth_order[4], 100.05)
+    poped_expected_nothing = cancel_order!(ob, touple...)
+    @test isnothing(poped_expected_nothing)
+    touple = (fourth_order[1]+123234, fourth_order[4], fourth_order[2])
+    poped_expected_nothing = cancel_order!(ob, touple...)
+    @test isnothing(poped_expected_nothing)
 end
 # Market order side should be discussed
 # Limit order to match market order or just submit all to the brokers

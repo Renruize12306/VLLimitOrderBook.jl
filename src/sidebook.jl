@@ -173,16 +173,18 @@ function pop_order!(
         Δvolm = order_queue.total_volume[] # get stats before deletion
         ord = popat_orderid!(order_queue, orderid)
         Δvolm -= order_queue.total_volume[] # get stats after deletion
-
+        
         # If order deletion depleted price queue, delete the whole queue
         if isempty(order_queue)
             _popat_queue!(sb, price) # note: this function will update price
         end
 
-        # Update Onesidedbook info
-        sb.num_orders -= 1
-        sb.total_volume -= Δvolm
-        sb.total_volume_funds -= Float64(Δvolm*price)
+        if !isnothing(ord)
+            # Update Onesidedbook info
+            sb.num_orders -= 1
+            sb.total_volume -= Δvolm
+            sb.total_volume_funds -= Float64(Δvolm*price)
+        end
 
         return ord # return popped order, is nothing if no order found
     else
