@@ -30,39 +30,9 @@ Base.isempty(sb::OneSidedBook) = isempty(sb.book)
 
 
 "Compute total volume available below limit price"
-function _size_available(sb::OneSidedBook{Sz,Px,Oid,Aid},limit_price::Px) where {Sz,Px,Oid,Aid}
-    t = Sz(0)
-    if isbidbook(sb)
-        for q in sb.book
-            # since it is minus
-            # q[1] is price
-            (abs(q[1]) >= limit_price) ? (t += q[2].total_volume[]) : break
-        end
-    else
-        for q in sb.book
-            (q[1] <= limit_price) ? (t += q[2].total_volume[]) : break
-        end
-    end
-    return t
-end
+_size_available(sb::OneSidedBook,::Nothing) = sb.total_volume
 
 "Compute currency volume available below limit price"
-function _funds_available(sb::OneSidedBook{Sz,Px,Oid,Aid},limit_price::Px) where {Sz,Px,Oid,Aid}
-    t = Int64(0.0)
-    if isbidbook(sb)
-        for q in sb.queue
-            (abs(q[1]) >= limit_price) ? (t += Int64(q[2].total_volume[] * abs(q[1]))) : break
-        end
-    else
-        for q in sb.queue
-            (q[1] <= limit_price) ? (t += Int64(q[2].total_volume[] * q[1])) : break
-        end
-    end
-    return t
-
-end
-
-_size_available(sb::OneSidedBook,::Nothing) = sb.total_volume
 _funds_available(sb::OneSidedBook,::Nothing) = sb.total_volume_funds
 
 "Updates the latest best price in a Sidebook (either :BID or :ASK book)."
