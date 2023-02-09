@@ -40,7 +40,7 @@ function submit_limit_order!(
        !isnothing(best_ask) &&
        (limit_price >= best_ask) # order is bid (buy) and can cross
        error("The orderbook should not be crossed, the buy limit order should not exceed the minimum ASK price")
-    elseif !isbuy(side) &&
+    elseif issell(side) &&
            !isnothing(best_ask) &&
            (limit_price <= best_bid) # order is ask (sell) and can cross
         error("The orderbook should not be crossed, the sell limit order should not exceed the maximus BID price")

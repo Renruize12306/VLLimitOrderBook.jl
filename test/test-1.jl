@@ -1,4 +1,4 @@
-using AVLTrees: AVLTree
+using AVLTrees
 using Base.Iterators: zip,cycle,take,filter, flatten
 using Dates
 begin # Create (Deterministic) Limit Order Generator
@@ -144,7 +144,72 @@ end
     @test mo_match_sizes == expected_mo_match_size
     @test mo_ltt == 0
 end
-
+@testset "Test Base Order Check and Print Function" begin
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    
+    bid_order_queue_100_02 = AVLTrees.findkey(ob.ask_orders.book, Float32(100.02))
+    @test length(bid_order_queue_100_02) == 2
+    file_name = "base_show_orderqueue.txt"
+    io = open(file_name, "w");
+    Base.print(io, bid_order_queue_100_02)
+    poped_order_1 = Base.popfirst!(bid_order_queue_100_02)
+    poped_order_2 = Base.popfirst!(bid_order_queue_100_02)
+    poped_order_3 = Base.popfirst!(bid_order_queue_100_02)
+    
+    @test isnothing(poped_order_3)
+    Base.print(io, poped_order_1)
+    Base.show(io, poped_order_1)
+    close(io)
+    expected_output = "OrderQueue at price=$(bid_order_queue_100_02.price):\n"*
+        " Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101 )\n"*
+        " Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=10, price=100.02, orderid=5, acctid=10101 )\n"*
+        "Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101 )\n"*
+        "Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101 )\n"
+    output_contents = read("base_show_orderqueue.txt", String)
+    @test output_contents == expected_output
+end
+@testset "Test Base Order Check and Print Function" begin
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    
+    bid_order_queue_100_02 = AVLTrees.findkey(ob.ask_orders.book, Float32(100.02))
+    @test length(bid_order_queue_100_02) == 2
+    poped_order_1 = Base.popfirst!(bid_order_queue_100_02)
+    file_name = "base_show_order_property.txt"
+    io = open(file_name, "w");
+    Base.show(io, poped_order_1.side)
+    Base.println(io)
+    Base.show(io, "text/plain", poped_order_1.side)
+    Base.println(io)
+    Base.show(io, "text/plain", VANILLA_FILLTYPE)
+    Base.println(io)
+    Base.print(io, VANILLA_FILLTYPE)
+    close(io)
+    expected_output = "OrderSide(Sell)\n"*
+            "OrderSide(Sell)\n"*
+            "OrderTraits(allornone=$(VANILLA_FILLTYPE.allornone), immediateorcancel=$(VANILLA_FILLTYPE.immediateorcancel))\n"*
+            " Other Properties:\n"*
+            " - isfillorkill=false,\n"*
+            " - allows_book_insert=true,\n"*
+            " - allows_partial_fill=true\n"*
+            "OrderTraits(allornone=$(VANILLA_FILLTYPE.allornone), immediateorcancel=$(VANILLA_FILLTYPE.immediateorcancel))\n"*
+            " Other Properties:\n"*
+            " - isfillorkill=false,\n"*
+            " - allows_book_insert=true,\n"*
+            " - allows_partial_fill=true"
+    output_contents = read("base_show_order_property.txt", String)
+    @test output_contents == expected_output
+    
+end
 # Market order side should be discussed
 @testset "Test MO, LO insert, LO cancel outputs" begin
     ob = MyLOBType() #Initialize empty book
@@ -395,9 +460,9 @@ end
     "  ⋄ best bid/ask price: (nothing, nothing)\n"*
     "  ⋄ total bid/ask volume: (0, 0)\n"*
     "  ⋄ total bid/ask orders: (0, 0)\n"*
-    "  ⋄ flags = [:PlotTickMax => 5]"*
+    "  ⋄ flags = [:PlotTickMax => 5]\n"*
     "\n Order Book histogram (within 5 ticks of center):\n"*
-    "\n    :BID   <empty>\n\n"*
+    "\n\n    :BID   <empty>\n"*
     "\n    :ASK   <empty>\n"*
     "OrderBook{Sz=Int64,Px=Float32,Oid=Int64,Aid=Int64} with properties:\n"*
     "  ⋄ best bid/ask price: $(best_bid_ask(ob))\n"*
@@ -414,7 +479,8 @@ end
     "\n   :BID 99.98 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 5  \n"*
     "                                                       \n"*
     "\n                                                        \n"*
-    "   :ASK 100.03 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 2  \n                                                        \n"
+    "   :ASK 100.03 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 2  \n"*
+    "                                                        \n"
     output_contents = read("base_show.txt", String)
-    @test output_contents != expected_output
+    @test output_contents == expected_output
 end

@@ -31,7 +31,7 @@ const ALLORNONE_FILLTYPE = OrderTraits(true,true)
 
 
 Base.string(x::OrderTraits) =
-    @sprintf("OrderTraits(allornone=%s,immediateorcancel=%s,allow_cross=%s)",x.allornone,x.immediateorcancel,x.allow_cross)
+    @sprintf("OrderTraits(allornone=%s, immediateorcancel=%s)\n Other Properties:\n - isfillorkill=%s,\n - allows_book_insert=%s,\n - allows_partial_fill=%s",x.allornone,x.immediateorcancel,isfillorkill(x),allows_book_insert(x),allows_partial_fill(x))
 Base.print(io::IO, x::OrderTraits) = print(io, string(x))
 Base.show(io::IO, ::MIME"text/plain", x::OrderTraits) = print(io, string(x))
 
@@ -99,10 +99,6 @@ mutable struct Order{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
 end
 
 # Order utility functions
-has_acct(o::Order) = isnothing(o.acctid)
-isbuy(o::Order) = o.side.is_buy
-
-
 function Base.show(io::IO,o::Order{Sz,Px,Oid,Aid}) where {Sz,Px,Oid,Aid}
     str_lst = [
         "Order{$Sz,$Px,$Oid,$Aid}(",
@@ -111,7 +107,7 @@ function Base.show(io::IO,o::Order{Sz,Px,Oid,Aid}) where {Sz,Px,Oid,Aid}
         "price=$(o.price),",
         "orderid=$(o.orderid),",
         "acctid=$(o.acctid)",
-        ")"]
+        ")\n"]
     join(io,str_lst," ")
 end
 
@@ -123,8 +119,8 @@ function Base.print(io::IO,o::Order{Sz,Px,Oid,Aid}) where {Sz,Px,Oid,Aid}
         "price=$(o.price),",
         "orderid=$(o.orderid),",
         "acctid=$(o.acctid)",
-        ")"]
-    join(io,str_lst)
+        ")\n"]
+    join(io,str_lst," ")
 end
 
 
@@ -238,6 +234,5 @@ function Base.print(io::IO, oq::OrderQueue)
     for ord in oq.queue
         write(io::IO, " ")
         print(io::IO, ord)
-        write(io::IO, "\n")
     end
 end
