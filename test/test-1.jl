@@ -157,6 +157,63 @@ end
 
 end
 
+@testset "Test Function Sumbit Market Order By funds nornal case" begin
+    MyOrderSubTypes1 = (Float32,Float32,Int64,Int64) # define types for Order Size, Price, Order IDs, Account IDs
+    MyOrderType1 = Order{MyOrderSubTypes...}
+    MyLOBType1 = OrderBook{MyOrderSubTypes...}
+    ob = MyLOBType1() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    order_match_list, fund_left = submit_market_order_byfunds!(ob, SELL_ORDER, 99.98)
+    @test length(order_match_list) == 1
+    @test fund_left == 0
+    order_match_list, fund_left = submit_market_order_byfunds!(ob, SELL_ORDER, 200)
+    @test sum(x.size for x in order_match_list) == 2
+    @test abs(fund_left-0.04f0) <= 0.0
+    order_match_list, fund_left = submit_market_order_byfunds!(ob, SELL_ORDER, 2000)
+    @test sum(x.size for x in order_match_list) == 20
+    @test abs(fund_left-0.43f0) <= 0.0
+    order_match_list, fund_left = submit_market_order_byfunds!(ob, BUY_ORDER, 200)
+    @test sum(x.size for x in order_match_list) == 1
+    @test abs(fund_left-99.98f0) <= 0.0
+    order_match_list, fund_left = submit_market_order_byfunds!(ob, BUY_ORDER, 401)
+    @test sum(x.size for x in order_match_list) == 4
+    @test abs(fund_left-0.92f0) <= 0.0
+    order_match_list, fund_left = submit_market_order_byfunds!(ob, BUY_ORDER, 100)
+    @test length(order_match_list) == 0
+    @test abs(fund_left-100f0) <= 0.0
+end
+
+@testset "Test Function Sumbit Market Order By funds edge case_float quantity" begin
+    MyOrderSubTypes1 = (Float32,Float32,Int64,Int64) # define types for Order Size, Price, Order IDs, Account IDs
+    MyOrderType1 = Order{MyOrderSubTypes1...}
+    MyLOBType1 = OrderBook{MyOrderSubTypes1...}
+    ob = MyLOBType1() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    order_match_list, fund_left = submit_market_order_byfunds!(ob, BUY_ORDER, 50)
+    @test sum(x.size for x in order_match_list) == 0.49990004f0
+end
+
+@testset "Test Function Sumbit Market Order By funds edge ALLORNONE_FILLTYPE" begin
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    order_match_list, fund_left = submit_market_order_byfunds!(ob, SELL_ORDER, 100000, ALLORNONE_FILLTYPE)
+    @test length(order_match_list) == 0
+    @test fund_left-100000 <= 0.0
+end
+
+
 @testset "Test Account Tracking" begin
     ob = MyLOBType() #Initialize empty book
 

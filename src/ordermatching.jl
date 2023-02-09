@@ -186,7 +186,7 @@ function _walk_order_book_byfunds!(
     order_match_lst = Vector{Order{Sz,Px,Oid,Aid}}()
     funds_left = order_funds # remaining quantity to trade
     # Perform initial available liquidity check
-    if isallornone(order_mode) && (_size_available(sb, limit_price) < order_size)
+    if isallornone(order_mode) && (_funds_available(sb, limit_price) < order_funds)
         return order_match_lst, funds_left
     end
     # Perform matching logic
@@ -213,20 +213,19 @@ function _walk_order_book_byfunds!(
 
                     if Sz <: Integer
                         rem_match_size = floor(Sz, funds_left / best_ord.price)
+                        mod = funds_left - best_ord.price * rem_match_size
+                        if (abs(mod - best_ord.price) < 0.01)
+                            rem_match_size +=1
+                        end
                         # account for instance where user didn't submit high enough initial funds
                         if iszero(rem_match_size)
-                            return_ord = copy_modify_size(best_ord, best_ord.size - rem_match_size)
-                            pushfirst!(price_queue, return_ord)
-                            # Add remainder to match list & decrement outstanding MO
-                            best_ord = copy_modify_size(best_ord, rem_match_size)
-                            push!(order_match_lst, best_ord)
-                            funds_left -= (best_ord.size * best_ord.price)
+                            pushfirst!(price_queue, best_ord)
                             if !isempty(price_queue) # If price queue wasn't killed, put it back into the OneSidedBook
                                 _insert_queue!(sb, price_queue)
                                 _update_next_best_price!(sb)
                             end
                             # Return results
-                            return order_match_lst, funds_left
+                            return order_match_lst, round(funds_left;digits = 2)
                         end
                     end
 
@@ -236,6 +235,9 @@ function _walk_order_book_byfunds!(
                     best_ord = copy_modify_size(best_ord, rem_match_size)
                     push!(order_match_lst, best_ord)
                     funds_left -= (best_ord.size * best_ord.price)
+                    if (abs(funds_left) < 0.01)
+                        funds_left = 0
+                    end
                 end
             end
             if !isempty(price_queue) # If price queue wasn't killed, put it back into the OneSidedBook
@@ -245,7 +247,7 @@ function _walk_order_book_byfunds!(
         end
     end
     # Return results
-    return order_match_lst, funds_left
+    return order_match_lst, round(funds_left;digits = 2)
 end
 
 """

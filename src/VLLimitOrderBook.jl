@@ -7,7 +7,7 @@ include("orderqueue.jl")
 include("sidebook.jl")
 include("book.jl")
 include("ordermatching.jl")
-export BUY_ORDER, SELL_ORDER, VANILLA_FILLTYPE, IMMEDIATEORCANCEL_FILLTYPE, FILLORKILL_FILLTYPE
+export BUY_ORDER, SELL_ORDER, VANILLA_FILLTYPE, IMMEDIATEORCANCEL_FILLTYPE, FILLORKILL_FILLTYPE, ALLORNONE_FILLTYPE
 export OrderBook, Order, OrderTraits, AcctMap, OrderSide
 export Monetary, AssetMismatch
 export submit_order!,
