@@ -41,6 +41,23 @@ end
     @test isempty(ob.ask_orders)
     @test isempty(ob.acct_map[10101])
 end
+@testset "Test submit limit orders handling errors and edge cases" begin
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    
+    @test_throws ErrorException("The orderbook should not be crossed, the buy limit order should not exceed the minimum ASK price") submit_limit_order!(ob, 10086, BUY_ORDER, 110,10101)
+    @test_throws ErrorException("The orderbook should not be crossed, the sell limit order should not exceed the maximus BID price") submit_limit_order!(ob, 10086, SELL_ORDER, 99,10101)
+    @test_throws ErrorException("Both limit_price and limit_size must be positive") submit_limit_order!(ob, 10086, BUY_ORDER, -110,10101)
+    @test_throws ErrorException("Both limit_price and limit_size must be positive") submit_limit_order!(ob, 10086, BUY_ORDER, 110,-10101)
+    new_open_order, cross_match_lst, remaining_size = submit_limit_order!(ob, 10086, SELL_ORDER, 100,10,10101,IMMEDIATEORCANCEL_FILLTYPE)
+    @test isnothing(new_open_order)
+    @test length(cross_match_lst) == 0
+    @test remaining_size == 10
+end
 @testset "Test cancel empty orders" begin
     ob = MyLOBType() #Initialize empty book
     order_info_lst = take(lmt_order_info_iter,6)
@@ -74,7 +91,17 @@ end
     @test isempty(ob.bid_orders)
     @test isempty(ob.ask_orders)
 end
-
+@testset "Test Submit Market Order edeg cases" begin
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    order_match_lst, shares_left = submit_market_order!(ob,SELL_ORDER,24,ALLORNONE_FILLTYPE)
+    @test length(order_match_lst) == 0
+    @test shares_left == 24
+end
 @testset "Order match exact - bid" begin # Test correctness in order matching system / Stat calculation (:BID)
     ob = MyLOBType() #Initialize empty book
     # record order book info before

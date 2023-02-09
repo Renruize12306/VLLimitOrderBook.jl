@@ -36,16 +36,14 @@ function submit_limit_order!(
     end
     ## Part 1 - Cross the Order if appropriate
     best_bid, best_ask = best_bid_ask(ob) # check that price in right range
-    if allows_cross(fill_mode) &&
-       isbuy(side) &&
+    if isbuy(side) &&
        !isnothing(best_ask) &&
        (limit_price >= best_ask) # order is bid (buy) and can cross
        error("The orderbook should not be crossed, the buy limit order should not exceed the minimum ASK price")
-    elseif allows_cross(fill_mode) &&
-           !isbuy(side) &&
+    elseif !isbuy(side) &&
            !isnothing(best_ask) &&
            (limit_price <= best_bid) # order is ask (sell) and can cross
-        error("The orderbook should not be crossed, the sell limit order should not exceed the minimum BID price")
+        error("The orderbook should not be crossed, the sell limit order should not exceed the maximus BID price")
     else # order can or does not cross, return empty matches
         cross_match_lst, remaining_size = Vector{Order{Sz,Px,Oid,Aid}}(), Sz(limit_size)
     end
@@ -79,23 +77,10 @@ function submit_limit_order!(
     else
         new_open_order = nothing
     end
-
     ## Part 3 - Return information
     return (
         new_open_order, cross_match_lst, remaining_size
     )::Tuple{Union{Order{Sz,Px,Oid,Aid},Nothing},Vector{Order{Sz,Px,Oid,Aid}},Sz}
-end
-
-@inline _is_best_price_inside_limit(::OneSidedBook, ::Nothing) = true
-
-@inline function _is_best_price_inside_limit(
-    sb::OneSidedBook{Sz,Px,Oid,Aid}, limit_price::Px
-) where {Sz,Px,Oid,Aid}
-    if isbidbook(sb)
-        return sb.best_price >= limit_price
-    else
-        return sb.best_price <= limit_price
-    end
 end
 
 """
@@ -131,8 +116,7 @@ function _walk_order_book_bysize!(
         return order_match_lst, shares_left
     end
     # Perform matching logic
-    limit_price_check = Base.Fix2(_is_best_price_inside_limit, limit_price)
-    while !isempty(sb.book) && !iszero(shares_left) && limit_price_check(sb) # while book not empty, order not done and best price within limit price
+    while !isempty(sb.book) && !iszero(shares_left) # while book not empty, order not done and best price within limit price
         price_queue::OrderQueue = _popfirst_queue!(sb)
         if price_queue.total_volume[] <= shares_left # If entire queue is to be wiped out
             append!(order_match_lst, price_queue.queue) # Add all of the orders to the match list
@@ -190,8 +174,7 @@ function _walk_order_book_byfunds!(
         return order_match_lst, funds_left
     end
     # Perform matching logic
-    limit_price_check = Base.Fix2(_is_best_price_inside_limit, limit_price)
-    while !isempty(sb.book) && !iszero(funds_left) && limit_price_check(sb) # while book not empty, order not done and best price within limit price
+    while !isempty(sb.book) && !iszero(funds_left) # while book not empty, order not done and best price within limit price
         price_queue::OrderQueue = _popfirst_queue!(sb)
         if (price_queue.total_volume[] * price_queue.price) <= funds_left # If entire queue is to be wiped out
             append!(order_match_lst, price_queue.queue) # Add all of the orders to the match list
@@ -337,40 +320,3 @@ function cancel_order!(
 end
 
 cancel_order!(ob::OrderBook, o::Order) = cancel_order!(ob, o.orderid, o.side, o.price)
-
-function cancel_unmatched_market_order!(
-    ob::OrderBook{Sz,Px,Oid,Aid}, orderid::Oid, side::OrderSide, price
-) where {Sz,Px,Oid,Aid}
-    # Delete order from bid (buy) or ask (sell) book
-    if isbuy(side)
-        popped_ord = pop_order!(ob.bid_orders, Px(price), orderid)
-    else
-        popped_ord = pop_order!(ob.ask_orders, Px(price), orderid)
-    end
-    # Delete order from account maps
-    if !isnothing(popped_ord) && !isnothing(popped_ord.acctid)
-        _delete_order_acct_map!(ob.acct_map, popped_ord.acctid, popped_ord.orderid)
-    end
-    return popped_ord
-end
-
-function process_unmatched_limit_order!(
-    ob::OrderBook{Sz,Px,Oid,Aid}, orderid::Oid, side::OrderSide, price
-) where {Sz,Px,Oid,Aid}
-    #=
-    return (
-        new_open_order, cross_match_lst, remaining_size
-    )::Tuple{Union{Order{Sz,Px,Oid,Aid},Nothing},Vector{Order{Sz,Px,Oid,Aid}},Sz}
-    =#
-    # Delete order from bid (buy) or ask (sell) book
-    if isbuy(side)
-        popped_ord = pop_order!(ob.bid_orders, Px(price), orderid)
-    else
-        popped_ord = pop_order!(ob.ask_orders, Px(price), orderid)
-    end
-    # Delete order from account maps
-    if !isnothing(popped_ord) && !isnothing(popped_ord.acctid)
-        _delete_order_acct_map!(ob.acct_map, popped_ord.acctid, popped_ord.orderid)
-    end
-    return popped_ord
-end

@@ -16,7 +16,6 @@ Other than the constants described above, use non-vanilla modes with caution.
 Base.@kwdef struct OrderTraits
     allornone::Bool = false
     immediateorcancel::Bool = false
-    allow_cross::Bool = true
 end
 
 isallornone(mode::OrderTraits) = mode.allornone
@@ -24,12 +23,11 @@ isimmediateorcancel(mode::OrderTraits) = mode.immediateorcancel
 isfillorkill(mode::OrderTraits) = isallornone(mode)&&isimmediateorcancel(mode)
 allows_book_insert(mode::OrderTraits) = !isimmediateorcancel(mode)
 allows_partial_fill(mode::OrderTraits) = !isallornone(mode)
-allows_cross(mode::OrderTraits) = mode.allow_cross
 
-const VANILLA_FILLTYPE = OrderTraits(false,false,false) # GTC Good-Til-Canceled Order
-const FILLORKILL_FILLTYPE = OrderTraits(true,true,false)
-const IMMEDIATEORCANCEL_FILLTYPE = OrderTraits(false,true,false)
-const ALLORNONE_FILLTYPE = OrderTraits(true,true,false)
+const VANILLA_FILLTYPE = OrderTraits(false,false) # GTC Good-Til-Canceled Order
+const FILLORKILL_FILLTYPE = OrderTraits(true,true)
+const IMMEDIATEORCANCEL_FILLTYPE = OrderTraits(false,true)
+const ALLORNONE_FILLTYPE = OrderTraits(true,true)
 
 
 Base.string(x::OrderTraits) =
