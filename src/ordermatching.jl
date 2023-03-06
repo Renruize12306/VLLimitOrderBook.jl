@@ -1,4 +1,18 @@
 """
+    submit_stop_loss_order!(
+        ob::OrderBook{Sz,Px,Oid,Aid},
+        orderid::Oid,
+        side::OrderSide,
+        limit_price::Real,
+        limit_size::Real,
+        [, acct_id::Aid, fill_mode::OrderTraits ]
+    )
+"""
+function submit_stop_loss_order!()
+
+end
+
+"""
     submit_limit_order!(
         ob::OrderBook{Sz,Px,Oid,Aid},
         orderid::Oid,
@@ -38,12 +52,14 @@ function submit_limit_order!(
     best_bid, best_ask = best_bid_ask(ob) # check that price in right range
     if isbuy(side) &&
        !isnothing(best_ask) &&
-       (limit_price >= best_ask) # order is bid (buy) and can cross
-       error("The orderbook should not be crossed, the buy limit order should not exceed the minimum ASK price")
+       ((!fill_mode.allowlocking && limit_price >= best_ask)||
+       (fill_mode.allowlocking && limit_price > best_ask)) # order is bid (buy) and can cross
+       error("The orderbook should not be crossed, the bid limit order should not exceed the minimum ASK price")
     elseif issell(side) &&
-           !isnothing(best_ask) &&
-           (limit_price <= best_bid) # order is ask (sell) and can cross
-        error("The orderbook should not be crossed, the sell limit order should not exceed the maximus BID price")
+           !isnothing(best_bid) &&
+           ((!fill_mode.allowlocking && limit_price <= best_bid)||
+           (fill_mode.allowlocking && limit_price < best_bid)) # order is ask (sell) and can cross
+        error("The orderbook should not be crossed, the ask limit order should not exceed the maximus BID price")
     else # order can or does not cross, return empty matches
         cross_match_lst, remaining_size = Vector{Order{Sz,Px,Oid,Aid}}(), Sz(limit_size)
     end
@@ -51,7 +67,9 @@ function submit_limit_order!(
     ## Part 2 - Rest the remaining order in the book if possible
     if allows_book_insert(fill_mode) && !iszero(remaining_size) # if there are remaining shares, try to add remaining to the LOB
         best_bid, best_ask = best_bid_ask(ob) # new best bid and ask
-        if isbuy(side) && (isnothing(best_ask) || (limit_price < best_ask)) # if order is a buy and limit price is valid for resting order
+        if isbuy(side) && (isnothing(best_ask) || 
+            ((!fill_mode.allowlocking && limit_price < best_ask) ||
+            (fill_mode.allowlocking && limit_price <= best_ask))) # if order is a buy and limit price is valid for resting order
             # create and insert order object into BID book
             new_open_order = Order{Sz,Px,Oid,Aid}(
                 side, remaining_size, limit_price, orderid, acct_id
@@ -61,7 +79,9 @@ function submit_limit_order!(
             isnothing(acct_id) || _add_order_acct_map!(ob.acct_map, acct_id, new_open_order)
             # set remaining size to zero
             remaining_size = zero(Sz)
-        elseif !isbuy(side) && (isnothing(best_bid) || (limit_price > best_bid)) # if order is a sell and limit price is valid for resting order
+        elseif !isbuy(side) && (isnothing(best_bid) || 
+            ((!fill_mode.allowlocking && limit_price > best_bid)||
+            (fill_mode.allowlocking && limit_price >= best_bid))) # if order is a sell and limit price is valid for resting order
             # create and insert order object into ASK book
             new_open_order = Order{Sz,Px,Oid,Aid}(
                 side, remaining_size, limit_price, orderid, acct_id
@@ -256,7 +276,8 @@ function submit_market_order!(
     fill_mode::OrderTraits=VANILLA_FILLTYPE,
 ) where {Sz,Px,Oid,Aid}
     mo_size > zero(mo_size) || error("market order argument mo_size must be positive")
-    if isbuy(side)
+    if !isbuy(side)
+        # TODO change the side
         return _walk_order_book_bysize!(ob.ask_orders, ob.acct_map, Sz(mo_size), nothing, fill_mode)
     else
         return _walk_order_book_bysize!(ob.bid_orders, ob.acct_map, Sz(mo_size), nothing, fill_mode)
@@ -320,3 +341,16 @@ function cancel_order!(
 end
 
 cancel_order!(ob::OrderBook, o::Order) = cancel_order!(ob, o.orderid, o.side, o.price)
+
+function cancel_partial_order!(
+    ob::OrderBook{Sz,Px,Oid,Aid}, orderid::Oid, side::OrderSide, price, size
+)where {Sz,Px,Oid,Aid}
+    # Delete order from bid (buy) or ask (sell) book
+    if isbuy(side)
+        popped_size = pop_order_with_size!(ob.bid_orders, Px(price), orderid, size)
+    else
+        popped_size = pop_order_with_size!(ob.ask_orders, Px(price), orderid, size)
+    end
+    # since it is partially canceled, we don't need to eliminate from the order map
+    return popped_size
+end

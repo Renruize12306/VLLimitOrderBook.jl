@@ -16,6 +16,7 @@ Other than the constants described above, use non-vanilla modes with caution.
 Base.@kwdef struct OrderTraits
     allornone::Bool = false
     immediateorcancel::Bool = false
+    allowlocking::Bool = false
 end
 
 isallornone(mode::OrderTraits) = mode.allornone
@@ -24,10 +25,11 @@ isfillorkill(mode::OrderTraits) = isallornone(mode)&&isimmediateorcancel(mode)
 allows_book_insert(mode::OrderTraits) = !isimmediateorcancel(mode)
 allows_partial_fill(mode::OrderTraits) = !isallornone(mode)
 
-const VANILLA_FILLTYPE = OrderTraits(false,false) # GTC Good-Til-Canceled Order
-const FILLORKILL_FILLTYPE = OrderTraits(true,true)
-const IMMEDIATEORCANCEL_FILLTYPE = OrderTraits(false,true)
-const ALLORNONE_FILLTYPE = OrderTraits(true,true)
+const VANILLA_FILLTYPE = OrderTraits(false,false,false) # GTC Good-Til-Canceled Order
+const FILLORKILL_FILLTYPE = OrderTraits(true,true,false)
+const IMMEDIATEORCANCEL_FILLTYPE = OrderTraits(false,true,false)
+const ALLORNONE_FILLTYPE = OrderTraits(true,true,false)
+const ALLOW_LOCKING = OrderTraits(false,false,true) # pegging order with locking best bid/ask
 
 
 Base.string(x::OrderTraits) =
@@ -81,7 +83,7 @@ Order{Sz,Px,Pid,Aid}(side, size, price, orderid, order_mode [,acctid=nothing])
 where the types of `size` and `price` will be cast to the correct types.
 The `orderid` and `acctid` types will not be cast in order to avoid ambiguity.
 """
-mutable struct Order{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
+mutable struct Order{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Any}
     side::OrderSide
     size::Sz
     price::Px
@@ -93,7 +95,7 @@ mutable struct Order{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
         price::Real,
         orderid::Oid,
         acctid::Union{Aid,Nothing} = nothing,
-    ) where {Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
+    ) where {Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Any}
         new{Sz,Px,Oid,Aid}(side, Sz(size), Px(price), orderid, acctid) # cast price and size to correct types
     end
 end
@@ -143,7 +145,7 @@ OrderQueue also keeps track of its contained volume in shares and orders
 
 OrderQueue(price) Initializes an empty order queue at price
 """
-struct OrderQueue{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
+struct OrderQueue{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Any}
     price::Px # price at which queue is located
     queue::Vector{Order{Sz,Px,Oid,Aid}} # queue of orders as vector
     total_volume::Base.RefValue{Sz} # total volume in queue
@@ -182,7 +184,7 @@ function Base.pushfirst!(
     oq.num_orders[] += 1
 end
 
-isequal_orderid(o::Order{<:Real,<:Real,Oid,<:Real}, this_id::Oid) where {Oid<:Integer} =
+isequal_orderid(o::Order{<:Real,<:Real,Oid,<:Any}, this_id::Oid) where {Oid<:Integer} =
     o.orderid == this_id
 order_id_match(order_id) = Base.Fix2(isequal_orderid, order_id)
 

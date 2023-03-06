@@ -2,4 +2,6 @@
 *.info
 *.csv
 *.txt
-dummy.jl
+test/dummy
+test/validation
+data/
