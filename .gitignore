@@ -3,5 +3,4 @@
 *.csv
 *.txt
 test/dummy
-test/validation
 data/
