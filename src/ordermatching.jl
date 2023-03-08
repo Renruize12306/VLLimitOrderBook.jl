@@ -1,18 +1,4 @@
 """
-    submit_stop_loss_order!(
-        ob::OrderBook{Sz,Px,Oid,Aid},
-        orderid::Oid,
-        side::OrderSide,
-        limit_price::Real,
-        limit_size::Real,
-        [, acct_id::Aid, fill_mode::OrderTraits ]
-    )
-"""
-function submit_stop_loss_order!()
-
-end
-
-"""
     submit_limit_order!(
         ob::OrderBook{Sz,Px,Oid,Aid},
         orderid::Oid,
@@ -43,6 +29,7 @@ function submit_limit_order!(
     limit_size::Real,
     acct_id::Union{Nothing,Aid} = nothing,
     fill_mode::OrderTraits=VANILLA_FILLTYPE,
+    display::Bool = true
 ) where {Sz,Px,Oid,Aid,Dt,Ip,Pt}
     # Part 0 - Check Arguments
     if !((limit_price > zero(limit_price)) && (limit_size > zero(limit_size)))
@@ -71,8 +58,9 @@ function submit_limit_order!(
             ((!fill_mode.allowlocking && limit_price < best_ask) ||
             (fill_mode.allowlocking && limit_price <= best_ask))) # if order is a buy and limit price is valid for resting order
             # create and insert order object into BID book
+            new_order_traits = OrderTraits(fill_mode.allornone, fill_mode.immediateorcancel, fill_mode.allowlocking)
             new_open_order = Order{Sz,Px,Oid,Aid}(
-                side, remaining_size, limit_price, orderid, acct_id
+                side, remaining_size, limit_price, orderid, acct_id, new_order_traits, display
             )
             insert_order!(ob.bid_orders, new_open_order)
             # if account_id present, add order account map
@@ -83,8 +71,9 @@ function submit_limit_order!(
             ((!fill_mode.allowlocking && limit_price > best_bid)||
             (fill_mode.allowlocking && limit_price >= best_bid))) # if order is a sell and limit price is valid for resting order
             # create and insert order object into ASK book
+            new_order_traits = OrderTraits(fill_mode.allornone, fill_mode.immediateorcancel, fill_mode.allowlocking)
             new_open_order = Order{Sz,Px,Oid,Aid}(
-                side, remaining_size, limit_price, orderid, acct_id
+                side, remaining_size, limit_price, orderid, acct_id, new_order_traits, display
             )
             insert_order!(ob.ask_orders, new_open_order)
             # if account_id present, add order account map
@@ -170,6 +159,67 @@ function _walk_order_book_bysize!(
                 _insert_queue!(sb, price_queue)
                 _update_next_best_price!(sb)
             end
+        end
+    end
+    # Return results
+    return order_match_lst, shares_left
+end
+
+function _walk_order_book_bysize2!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid},
+    acct_map::AcctMap{Sz,Px,Oid,Aid},
+    order_size::Sz,
+    limit_price::Union{Px,Nothing},
+    top_execute::Bool,
+    order_mode::OrderTraits,
+)::Tuple{Vector{Order{Sz,Px,Oid,Aid}},Sz} where {Sz,Px,Oid,Aid}
+    # Allocate memory for order output
+    order_match_lst = Vector{Order{Sz,Px,Oid,Aid}}()
+    shares_left = order_size # remaining quantity to trade
+    # Perform initial available liquidity check
+    if isallornone(order_mode) && (_size_available(sb, limit_price) < order_size)
+        return order_match_lst, shares_left
+    end
+    # Perform matching logic
+
+    left_queues = Vector{OrderQueue{Sz,Px,Oid,Aid}}()
+    
+
+    while !isempty(sb.book) && !iszero(shares_left) # while book not empty, order not done and best price within limit price
+        price_queue::OrderQueue = _popfirst_queue!(sb)
+        left_orders = Vector{Order{Sz,Px,Oid,Aid}}()
+        while !isempty(price_queue) && !iszero(shares_left) # while not done and queue not empty
+            best_ord::Order = popfirst!(price_queue) # pop out best order
+            if best_ord.display || top_execute
+                if shares_left >= best_ord.size # Case 1: Limit order gets wiped out
+                    # Add best_order to match list & decrement outstanding MO
+                    push!(order_match_lst, best_ord)
+                    _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, best_ord.size)
+                    shares_left -= best_ord.size
+                else
+                    # shares_left < best_ord.size # Case 2: Market Order gets wiped out
+                    # Return the difference: LO.size-MO.size back to the order book
+                    return_ord = copy_modify_size(best_ord, best_ord.size - shares_left)
+                    pushfirst!(price_queue, return_ord)
+                    # Add remainder to match list & decrement outstanding MO
+                    best_ord = copy_modify_size(best_ord, shares_left)
+                    push!(order_match_lst, best_ord)
+                    _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, shares_left)
+                    shares_left -= best_ord.size
+                end
+            else
+                pushfirst!(left_orders, best_ord)
+            end
+        end
+        while length(left_orders) > 0
+            pushfirst!(price_queue, popfirst!(left_orders))
+        end
+        push!(left_queues, price_queue)
+    end
+    for left_queue in left_queues
+        if !isempty(left_queue) # If price queue wasn't killed, put it back into the OneSidedBook
+            _insert_queue!(sb, left_queue)
+            _update_next_best_price!(sb)
         end
     end
     # Return results
@@ -273,14 +323,15 @@ function submit_market_order!(
     ob::OrderBook{Sz,Px,Oid,Aid},
     side::OrderSide,
     mo_size::Real,
+    top_execute::Bool = true,
     fill_mode::OrderTraits=VANILLA_FILLTYPE,
 ) where {Sz,Px,Oid,Aid}
     mo_size > zero(mo_size) || error("market order argument mo_size must be positive")
     if !isbuy(side)
         # TODO change the side
-        return _walk_order_book_bysize!(ob.ask_orders, ob.acct_map, Sz(mo_size), nothing, fill_mode)
+        return _walk_order_book_bysize2!(ob.ask_orders, ob.acct_map, Sz(mo_size), nothing, top_execute, fill_mode)
     else
-        return _walk_order_book_bysize!(ob.bid_orders, ob.acct_map, Sz(mo_size), nothing, fill_mode)
+        return _walk_order_book_bysize2!(ob.bid_orders, ob.acct_map, Sz(mo_size), nothing, top_execute, fill_mode)
     end
 end
 
@@ -353,4 +404,74 @@ function cancel_partial_order!(
     end
     # since it is partially canceled, we don't need to eliminate from the order map
     return popped_size
+end
+
+"""
+    check_market_order_priority_with_order_id!(
+        ob::OrderBook{Sz,Px,Oid,Aid},
+        orderid::Oid,
+        side::OrderSide
+    )
+This function will check whether the current orderbook, with a given order id, have highest 
+priority to pop out of the queue
+"""
+function check_market_order_priority_with_order_id!(    
+    ob::OrderBook{Sz,Px,Oid,Aid},
+    orderid::Oid,
+    side::OrderSide,
+    price,
+) where {Sz,Px,Oid,Aid}
+    if isbuy(side)
+        checked_id = check_order_with_id_and_price!(ob.bid_orders, Px(price), orderid)
+    else
+        checked_id = check_order_with_id_and_price!(ob.ask_orders, Px(price), orderid)
+    end
+    # this is 
+    return checked_id
+end
+
+function modify_higher_priorty_order_display!(    
+    ob::OrderBook{Sz,Px,Oid,Aid},
+    orderid::Oid,
+    side::OrderSide,
+    price::Px,
+    displayable::Bool,
+) where {Sz,Px,Oid,Aid}
+    if isbuy(side)
+        modified_number = modify_higher_priorty_sidebook_display!(ob.bid_orders, price, orderid, displayable)
+    else
+        modified_number = modify_higher_priorty_sidebook_display!(ob.ask_orders, price, orderid, displayable)
+    end
+    # this is 
+    return modified_number
+end
+
+function modify_lower_priorty_order_display!(    
+    ob::OrderBook{Sz,Px,Oid,Aid},
+    orderid::Oid,
+    side::OrderSide,
+    price::Px,
+    displayable::Bool,
+) where {Sz,Px,Oid,Aid}
+    if isbuy(side)
+        modified_number = modify_lower_priorty_sidebook_display!(ob.bid_orders, price, orderid, displayable)
+    else
+        modified_number = modify_lower_priorty_sidebook_display!(ob.ask_orders, price, orderid, displayable)
+    end
+    # this is 
+    return modified_number
+end
+function need_higher_priority!(
+    ob::OrderBook{Sz,Px,Oid,Aid},
+    checked_id::Int,
+    side::OrderSide,
+    price::Px,
+) where {Sz,Px,Oid,Aid}
+    if isbuy(side)
+        modified_number = need_higher_sidebook_priority!(ob.bid_orders, price, checked_id)
+    else
+        modified_number = need_higher_sidebook_priority!(ob.ask_orders, price, checked_id)
+    end
+    # this is 
+    return modified_number
 end

@@ -195,3 +195,63 @@ function pop_order_with_size!(
         return nothing
     end
 end
+
+
+function check_order_with_id_and_price!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid
+) where {Oid,Aid,Sz<:Real,Px<:Real}
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        ret_ind = findfirst(order_id_match(orderid), order_queue.queue)
+        return ret_ind
+    else
+        return 0
+    end
+end
+
+function modify_higher_priorty_sidebook_display!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid, displayable::Bool
+)where {Oid,Aid,Sz<:Real,Px<:Real}
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        ret_ind = findfirst(order_id_match(orderid), order_queue.queue)
+        if isnothing(ret_ind)
+            return 0
+        else
+            for ind_to_modify in 1 : (ret_ind - 1)
+                # fill_mode is now a static variable, we need to assign to each order
+                order_queue.queue[ind_to_modify].display = displayable
+            end
+            return (ret_ind - 1)
+        end
+    else
+        return 0
+    end
+end
+
+function modify_lower_priorty_sidebook_display!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid, displayable::Bool
+)where {Oid,Aid,Sz<:Real,Px<:Real}
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        ret_ind = findfirst(order_id_match(orderid), order_queue.queue)
+        if isnothing(ret_ind)
+            return 0
+        else
+            order_queue.queue[ret_ind].display = displayable
+            return 1
+        end
+    else
+        return 0
+    end
+end
+function need_higher_sidebook_priority!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, checked_id::Int,
+)where {Oid,Aid,Sz<:Real,Px<:Real}
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        return !order_queue.queue[checked_id].display
+    else
+        return true
+    end
+end

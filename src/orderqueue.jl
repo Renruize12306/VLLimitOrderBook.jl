@@ -13,10 +13,17 @@ __Note:__ This feature is not well supported yet.
 Other than the constants described above, use non-vanilla modes with caution.
 
 """
-Base.@kwdef struct OrderTraits
-    allornone::Bool = false
-    immediateorcancel::Bool = false
-    allowlocking::Bool = false
+Base.@kwdef mutable struct OrderTraits
+    allornone::Bool
+    immediateorcancel::Bool
+    allowlocking::Bool
+    function OrderTraits(
+        allornone::Bool,
+        immediateorcancel::Bool,
+        allowlocking::Bool
+    ) 
+    new(allornone, immediateorcancel, allowlocking)
+    end
 end
 
 isallornone(mode::OrderTraits) = mode.allornone
@@ -33,7 +40,7 @@ const ALLOW_LOCKING = OrderTraits(false,false,true) # pegging order with locking
 
 
 Base.string(x::OrderTraits) =
-    @sprintf("OrderTraits(allornone=%s, immediateorcancel=%s)\n Other Properties:\n - isfillorkill=%s,\n - allows_book_insert=%s,\n - allows_partial_fill=%s",x.allornone,x.immediateorcancel,isfillorkill(x),allows_book_insert(x),allows_partial_fill(x))
+    @sprintf("OrderTraits(allornone=%s, immediateorcancel=%s, allowlocking=%s)",x.allornone,x.immediateorcancel,x.allowlocking)
 Base.print(io::IO, x::OrderTraits) = print(io, string(x))
 Base.show(io::IO, ::MIME"text/plain", x::OrderTraits) = print(io, string(x))
 
@@ -89,14 +96,18 @@ mutable struct Order{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Any}
     price::Px
     orderid::Oid
     acctid::Union{Aid,Nothing}
+    fill_mode::OrderTraits
+    display::Bool
     function Order{Sz,Px,Oid,Aid}(
         side::OrderSide,
         size::Real,
         price::Real,
         orderid::Oid,
         acctid::Union{Aid,Nothing} = nothing,
+        fill_mode::OrderTraits=VANILLA_FILLTYPE,
+        display::Bool = true,
     ) where {Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Any}
-        new{Sz,Px,Oid,Aid}(side, Sz(size), Px(price), orderid, acctid) # cast price and size to correct types
+        new{Sz,Px,Oid,Aid}(side, Sz(size), Px(price), orderid, acctid, fill_mode, display) # cast price and size to correct types
     end
 end
 
@@ -108,7 +119,9 @@ function Base.show(io::IO,o::Order{Sz,Px,Oid,Aid}) where {Sz,Px,Oid,Aid}
         "size=$(o.size),",
         "price=$(o.price),",
         "orderid=$(o.orderid),",
-        "acctid=$(o.acctid)",
+        "acctid=$(o.acctid),",
+        "fill_mode=$(o.fill_mode),",
+        "display=$(o.display)",
         ")\n"]
     join(io,str_lst," ")
 end
@@ -120,7 +133,9 @@ function Base.print(io::IO,o::Order{Sz,Px,Oid,Aid}) where {Sz,Px,Oid,Aid}
         "size=$(o.size),",
         "price=$(o.price),",
         "orderid=$(o.orderid),",
-        "acctid=$(o.acctid)",
+        "acctid=$(o.acctid),",
+        "fill_mode=$(o.fill_mode)",
+        "display=$(o.display)",
         ")\n"]
     join(io,str_lst," ")
 end
@@ -134,7 +149,7 @@ end
 
 "Return new order with size modified"
 copy_modify_size(o::Order{Sz,Px,Oid,Aid}, new_size::Sz) where {Sz,Px,Oid,Aid} =
-    Order{Sz,Px,Oid,Aid}(o.side, new_size::Sz, o.price, o.orderid, o.acctid)
+    Order{Sz,Px,Oid,Aid}(o.side, new_size::Sz, o.price, o.orderid, o.acctid, o.fill_mode, o.display)
 
 
 """"
