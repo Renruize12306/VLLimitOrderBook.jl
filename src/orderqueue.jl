@@ -134,7 +134,7 @@ function Base.print(io::IO,o::Order{Sz,Px,Oid,Aid}) where {Sz,Px,Oid,Aid}
         "price=$(o.price),",
         "orderid=$(o.orderid),",
         "acctid=$(o.acctid),",
-        "fill_mode=$(o.fill_mode)",
+        "fill_mode=$(o.fill_mode),",
         "display=$(o.display)",
         ")\n"]
     join(io,str_lst," ")

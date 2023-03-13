@@ -164,7 +164,31 @@ function _walk_order_book_bysize!(
     # Return results
     return order_match_lst, shares_left
 end
+"""
+    _walk_order_book_bysize2!(
+        sb::OneSidedBook{Sz,Px,Oid,Aid},
+        acct_map::AcctMap{Sz,Px,Oid,Aid}
+        order_size::Sz,
+        limit_price::Union{Px,Nothing},
+        top_execute::Bool,
+        order_mode::OrderTraits,
+    )
 
+Cross (limit or market) order with opposite single side of book.
+Order size is specified in number of shares.
+If top_execute is true, the current top order will be executed at highest priority,
+else, we will check the display/non-display feature of the order book. In reality, 
+when two order at the different time priority, the order at lower priority executed first,
+this could be their display/non-display properties. The displayable order always have higher 
+priority than non-dinplayable order
+
+Return matches and outstanding size.
+
+__Notes__
+ - If `limit_price::Nothing`, order is treated as Market Order
+ - Function expects `order_size>0` and `limit_price>0`
+
+"""
 function _walk_order_book_bysize2!(
     sb::OneSidedBook{Sz,Px,Oid,Aid},
     acct_map::AcctMap{Sz,Px,Oid,Aid},
@@ -430,7 +454,7 @@ function check_market_order_priority_with_order_id!(
     return checked_id
 end
 
-function modify_higher_priorty_order_display!(    
+function raise_priorty_via_display_property!(    
     ob::OrderBook{Sz,Px,Oid,Aid},
     orderid::Oid,
     side::OrderSide,
@@ -446,7 +470,7 @@ function modify_higher_priorty_order_display!(
     return modified_number
 end
 
-function modify_lower_priorty_order_display!(    
+function reduce_priorty_via_display_property!(    
     ob::OrderBook{Sz,Px,Oid,Aid},
     orderid::Oid,
     side::OrderSide,
@@ -461,7 +485,7 @@ function modify_lower_priorty_order_display!(
     # this is 
     return modified_number
 end
-function need_higher_priority!(
+function elevate_priority!(
     ob::OrderBook{Sz,Px,Oid,Aid},
     checked_id::Int,
     side::OrderSide,
