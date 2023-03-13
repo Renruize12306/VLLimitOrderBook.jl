@@ -188,8 +188,6 @@ function pop_order_with_size!(
             _popat_queue!(sb, price) # note: this function will update price
         end
 
-
-
         return size # return popped order, is nothing if no order found
     else
         return nothing
@@ -205,11 +203,11 @@ function check_order_with_id_and_price!(
         ret_ind = findfirst(order_id_match(orderid), order_queue.queue)
         return ret_ind
     else
-        return 0
+        return nothing
     end
 end
 
-function modify_higher_priorty_sidebook_display!(
+function raise_sidebook_priorty_via_display_property!(
     sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid, displayable::Bool
 )where {Oid,Aid,Sz<:Real,Px<:Real}
     order_queue = _get_price_queue(sb, price)
@@ -229,7 +227,7 @@ function modify_higher_priorty_sidebook_display!(
     end
 end
 
-function modify_lower_priorty_sidebook_display!(
+function reduce_sidebook_priorty_via_display_property!(
     sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid, displayable::Bool
 )where {Oid,Aid,Sz<:Real,Px<:Real}
     order_queue = _get_price_queue(sb, price)
@@ -245,7 +243,7 @@ function modify_lower_priorty_sidebook_display!(
         return 0
     end
 end
-function need_higher_sidebook_priority!(
+function elevate_sidebook_priority!(
     sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, checked_id::Int,
 )where {Oid,Aid,Sz<:Real,Px<:Real}
     order_queue = _get_price_queue(sb, price)

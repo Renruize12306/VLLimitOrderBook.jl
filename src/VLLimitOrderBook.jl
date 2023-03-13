@@ -2,7 +2,6 @@ module VLLimitOrderBook
 using AVLTrees: AVLTree
 using Base: @kwdef
 using Printf
-include("broadcast.jl")
 include("orderqueue.jl")
 include("sidebook.jl")
 include("book.jl")

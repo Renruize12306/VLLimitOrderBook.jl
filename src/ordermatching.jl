@@ -91,79 +91,6 @@ function submit_limit_order!(
         new_open_order, cross_match_lst, remaining_size
     )::Tuple{Union{Order{Sz,Px,Oid,Aid},Nothing},Vector{Order{Sz,Px,Oid,Aid}},Sz}
 end
-
-"""
-    _walk_order_book_bysize!(
-        sb::OneSidedBook{Sz,Px,Oid,Aid},
-        acct_map::AcctMap{Sz,Px,Oid,Aid}
-        order_size::Sz,
-        limit_price::Union{Px,Nothing},
-        order_mode::OrderTraits,
-    )
-
-Cross (limit or market) order with opposite single side of book.
-Order size is specified in number of shares.
-Return matches and outstanding size.
-
-__Notes__
- - If `limit_price::Nothing`, order is treated as Market Order
- - Function expects `order_size>0` and `limit_price>0`
-
-"""
-function _walk_order_book_bysize!(
-    sb::OneSidedBook{Sz,Px,Oid,Aid},
-    acct_map::AcctMap{Sz,Px,Oid,Aid},
-    order_size::Sz,
-    limit_price::Union{Px,Nothing},
-    order_mode::OrderTraits,
-)::Tuple{Vector{Order{Sz,Px,Oid,Aid}},Sz} where {Sz,Px,Oid,Aid}
-    # Allocate memory for order output
-    order_match_lst = Vector{Order{Sz,Px,Oid,Aid}}()
-    shares_left = order_size # remaining quantity to trade
-    # Perform initial available liquidity check
-    if isallornone(order_mode) && (_size_available(sb, limit_price) < order_size)
-        return order_match_lst, shares_left
-    end
-    # Perform matching logic
-    while !isempty(sb.book) && !iszero(shares_left) # while book not empty, order not done and best price within limit price
-        price_queue::OrderQueue = _popfirst_queue!(sb)
-        if price_queue.total_volume[] <= shares_left # If entire queue is to be wiped out
-            append!(order_match_lst, price_queue.queue) # Add all of the orders to the match list
-            temp_shares_left = shares_left -= price_queue.total_volume[]
-            while !isempty(price_queue)
-                best_ord::Order = popfirst!(price_queue)
-                _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, best_ord.size)
-            end
-            shares_left = temp_shares_left # decrement what's left to trade
-        else
-            while !isempty(price_queue) && !iszero(shares_left) # while not done and queue not empty
-                best_ord::Order = popfirst!(price_queue) # pop out best order
-                if shares_left >= best_ord.size # Case 1: Limit order gets wiped out
-                    # Add best_order to match list & decrement outstanding MO
-                    push!(order_match_lst, best_ord)
-                    _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, best_ord.size)
-                    shares_left -= best_ord.size
-                else
-                    # shares_left < best_ord.size # Case 2: Market Order gets wiped out
-                    # Return the difference: LO.size-MO.size back to the order book
-                    return_ord = copy_modify_size(best_ord, best_ord.size - shares_left)
-                    pushfirst!(price_queue, return_ord)
-                    # Add remainder to match list & decrement outstanding MO
-                    best_ord = copy_modify_size(best_ord, shares_left)
-                    push!(order_match_lst, best_ord)
-                    _update_order_acct_map!(acct_map, best_ord.acctid, best_ord.orderid, shares_left)
-                    shares_left -= best_ord.size
-                end
-            end
-            if !isempty(price_queue) # If price queue wasn't killed, put it back into the OneSidedBook
-                _insert_queue!(sb, price_queue)
-                _update_next_best_price!(sb)
-            end
-        end
-    end
-    # Return results
-    return order_match_lst, shares_left
-end
 """
     _walk_order_book_bysize2!(
         sb::OneSidedBook{Sz,Px,Oid,Aid},
@@ -352,7 +279,6 @@ function submit_market_order!(
 ) where {Sz,Px,Oid,Aid}
     mo_size > zero(mo_size) || error("market order argument mo_size must be positive")
     if !isbuy(side)
-        # TODO change the side
         return _walk_order_book_bysize2!(ob.ask_orders, ob.acct_map, Sz(mo_size), nothing, top_execute, fill_mode)
     else
         return _walk_order_book_bysize2!(ob.bid_orders, ob.acct_map, Sz(mo_size), nothing, top_execute, fill_mode)
@@ -437,7 +363,7 @@ end
         side::OrderSide
     )
 This function will check whether the current orderbook, with a given order id, have highest 
-priority to pop out of the queue
+priority to pop out of the queue, 1 is the highest priority.
 """
 function check_market_order_priority_with_order_id!(    
     ob::OrderBook{Sz,Px,Oid,Aid},
@@ -462,11 +388,10 @@ function raise_priorty_via_display_property!(
     displayable::Bool,
 ) where {Sz,Px,Oid,Aid}
     if isbuy(side)
-        modified_number = modify_higher_priorty_sidebook_display!(ob.bid_orders, price, orderid, displayable)
+        modified_number = raise_sidebook_priorty_via_display_property!(ob.bid_orders, price, orderid, displayable)
     else
-        modified_number = modify_higher_priorty_sidebook_display!(ob.ask_orders, price, orderid, displayable)
+        modified_number = raise_sidebook_priorty_via_display_property!(ob.ask_orders, price, orderid, displayable)
     end
-    # this is 
     return modified_number
 end
 
@@ -478,13 +403,14 @@ function reduce_priorty_via_display_property!(
     displayable::Bool,
 ) where {Sz,Px,Oid,Aid}
     if isbuy(side)
-        modified_number = modify_lower_priorty_sidebook_display!(ob.bid_orders, price, orderid, displayable)
+        modified_number = reduce_sidebook_priorty_via_display_property!(ob.bid_orders, price, orderid, displayable)
     else
-        modified_number = modify_lower_priorty_sidebook_display!(ob.ask_orders, price, orderid, displayable)
+        modified_number = reduce_sidebook_priorty_via_display_property!(ob.ask_orders, price, orderid, displayable)
     end
-    # this is 
     return modified_number
 end
+
+
 function elevate_priority!(
     ob::OrderBook{Sz,Px,Oid,Aid},
     checked_id::Int,
@@ -492,9 +418,9 @@ function elevate_priority!(
     price::Px,
 ) where {Sz,Px,Oid,Aid}
     if isbuy(side)
-        modified_number = need_higher_sidebook_priority!(ob.bid_orders, price, checked_id)
+        modified_number = elevate_sidebook_priority!(ob.bid_orders, price, checked_id)
     else
-        modified_number = need_higher_sidebook_priority!(ob.ask_orders, price, checked_id)
+        modified_number = elevate_sidebook_priority!(ob.ask_orders, price, checked_id)
     end
     # this is 
     return modified_number

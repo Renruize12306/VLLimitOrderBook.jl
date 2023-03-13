@@ -26,13 +26,9 @@ Based on data feed messages from Nasdaq TotalViewITCH, we also make following ch
 
 FAQ:
 
-**Stop order and trailing stop order are another two order types, why I did not see here?**
-
-* We could think of stop order and trailing stop order as combination of behaviors from limit order and market order, hence we do not provide futher implementation here.
-
 **You mentioned notification feature above, why it is not in the latest commit of the code?**
 
-* We did implementation nofication in the earlier [commits](https://github.com/Renruize12306/VLLimitOrderBook.jl/commit/d1773488d154122ad3fe3fe9dc8ca21d96438453), but we then find the that we cannot the cross th
+* We did implement notification feature in the earlier [commits](https://github.com/Renruize12306/VLLimitOrderBook.jl/commit/d1773488d154122ad3fe3fe9dc8ca21d96438453), but we then find the that cross matching between bid/ask price is uncommon, it also lower the matching profiency of Limit Order Book. Hence, we simply remove this feature in the later iterations.
 
 
 ## Usage
@@ -77,7 +73,11 @@ end
 ```julia
 ob
 ```
-**An example to matching a limit order**
+**An example to matching a market order**
 ```julia
-submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 5, 101111, FILLORKILL_FILLTYPE)
+submit_market_order!(ob, BUY_ORDER, 10)
+```
+**An example to inspect orderbook statistics**
+```julia
+book_depth_info(ob)
 ```
