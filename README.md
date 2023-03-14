@@ -18,15 +18,15 @@ Based on original package, the following features have been added or modified:
 * Validates accuracy and correctness of the order book from data feed messages from [Nasdaq TotalViewITCH](https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts/NQTVITCHSpecification.pdf), a direct data feed product offered by The Nasdaq Stock Market, LLC.
 
 Based on data feed messages from Nasdaq TotalViewITCH, we also make following changes to enhance the functionality, 
-* We have added Display & Non-Display field to the Order Struct. This is because orders at the same price level may have different priorities based on their Display & Non-Display features. Orders with display feature always have a higher priority execution than Non-Display orders, even if display order have joined orderbook at a later time. This will help us ensure that orders are executed in the right order.
+* We have added Display & Non-Display field to the Order Struct. This is because orders at the same price level may have different priorities based on their Display & Non-Display features. Orders with display feature always have a higher execution priority than Non-Display orders, even if display order have joined orderbook at a later time. This will help us ensure that orders are executed in the right order.
 * We have changed the OrderTrait to be non-static and mutable variable. This is because different orders may have different order traits, and there is no way to distinguish this difference from the order feed of Nasdaq. Therefore, we needed to make changes according to specific data feed messages to ensure that we can handle order executed correctly.
-* We have also added an "allowlocking" boolean field in the OrderTrait. This field is necessary because some orders, such as pegged orders, will allow prices to lock between bid/ask prices (bid/ask price reached a same level). We cannot know this until we receive specific messages from the data feed. And we need to make changes according to specific data feed messages to ensure that we can handle these types of orders.
-* We have modified the order to be a mutable structure. This change will enable us to make changes to the original order object rather than generating a new object. This will enhance the performance and efficiency of our system
+* We have also added an "allowlocking" boolean field in the OrderTrait. This field is necessary because some orders, such as pegged orders, will allow prices to lock between bid/ask prices (bid/ask price reached a same level). We cannot know this until we receive specific messages from the data feed, i.e when order are executed at different prices. So we need to make changes according to specific data feed messages to ensure that we can handle these types of orders.
+* We have modified the order to be a mutable structure. This will enable us to make changes to the original order object rather than generating a new object, which will enhance the performance and efficiency of our system
 
 
 FAQ:
 
-**You mentioned notification feature above, why it is not in the latest commit of the code?**
+**Why notification is removed in the latest commit of the code?**
 
 * We did implement notification feature in the earlier [commits](https://github.com/Renruize12306/VLLimitOrderBook.jl/commit/d1773488d154122ad3fe3fe9dc8ca21d96438453), but we then find the that cross matching between bid/ask price is uncommon, it also lower the matching profiency of Limit Order Book. Hence, we simply remove this feature in the later iterations.
 
