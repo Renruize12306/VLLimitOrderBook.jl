@@ -144,7 +144,8 @@ begin
         # benchmark begins
         
         bc = @benchmarkable processing_vector_of_dict_messages($ob, $dicts_msgs)
-        bcmk = run(bc, samples = 20, evals = 10);
+        bcmk = run(bc, samples = 15, evals = 1);
+        # bcmk = run(bc);
         return ob, bcmk
     end
     function output_io(output, bcmk ,order_messages)
