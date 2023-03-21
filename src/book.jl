@@ -13,7 +13,7 @@ The account map is implemented as a `Dict` containing `AVLTree`s.
     AcctMap{Sz,Px,Oid,Aid} = Dict{Aid,AVLTree{Oid,Order{Sz,Px,Oid,Aid}}}
 The outer key is the account id, mapping to an `AVLTree` of `Order`s keyed by order id.
 """
-AcctMap{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer} = Dict{
+AcctMap{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Any} = Dict{
     Aid,AVLTree{Oid,Order{Sz,Px,Oid,Aid}}
 }
 
@@ -64,7 +64,7 @@ How to use `Orderbook`:
  - Write book state to `csv` file with [`write_csv`](@ref).
 
 """
-mutable struct OrderBook{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
+mutable struct OrderBook{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Any}
     bid_orders::OneSidedBook{Sz,Px,Oid,Aid} # bid orders
     ask_orders::OneSidedBook{Sz,Px,Oid,Aid} # ask orders
     acct_map::AcctMap{Sz,Px,Oid,Aid} # Map from acct_id::Aid to AVLTree{order_id::Oid,Order{Sz,Px,Oid,Aid}}

@@ -15,7 +15,7 @@ The book keeps track of various statistics such as the current best price,
 total share and price volume, as well as total contained number of orders.
 
 """
-@kwdef mutable struct OneSidedBook{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Integer}
+@kwdef mutable struct OneSidedBook{Sz<:Real,Px<:Real,Oid<:Integer,Aid<:Any}
     is_bid_side::Bool
     book::AVLTree{Px,OrderQueue{Sz,Px,Oid,Aid}} = AVLTree{Px,OrderQueue{Sz,Px,Oid,Aid}}()
     total_volume::Sz = 0 # Total volume available in shares
@@ -43,7 +43,7 @@ end
 
 "Retrieve order queue from OneSidedBook at given price"
 function _get_price_queue(
-    sb::OneSidedBook{<:Real,Px,<:Integer,<:Integer}, price::Px
+    sb::OneSidedBook{<:Real,Px,<:Integer,<:Any}, price::Px
 ) where {Px}
     pricekey = isaskbook(sb) ? price : -price
     return AVLTrees.findkey(sb.book, pricekey) # Return the price queue
@@ -159,5 +159,97 @@ function pop_order!(
         return ord # return popped order, is nothing if no order found
     else
         return nothing
+    end
+end
+
+function pop_order_with_size!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid, size::Sz
+) where {Oid,Aid,Sz<:Real,Px<:Real}
+    # Get price queue and delete order from it
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        Δvolm = order_queue.total_volume[] # get stats before deletion
+        # ord = popat_orderid!(order_queue, orderid)
+        ret_ind = findfirst(order_id_match(orderid), order_queue.queue)
+        order_queue.queue[ret_ind].size -= size
+        order_queue.total_volume[] -= size # get stats after deletion
+        
+
+        if size > 0
+            sb.total_volume -= Δvolm
+            sb.total_volume_funds -= Float64(Δvolm*price)
+        end
+
+        if order_queue.queue[ret_ind].size == 0
+            deleteat!(order_queue.queue, ret_ind)
+        end       
+         # If order deletion depleted price queue, delete the whole queue
+        if isempty(order_queue)
+            _popat_queue!(sb, price) # note: this function will update price
+        end
+
+        return size # return popped order, is nothing if no order found
+    else
+        return nothing
+    end
+end
+
+
+function check_order_with_id_and_price!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid
+) where {Oid,Aid,Sz<:Real,Px<:Real}
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        ret_ind = findfirst(order_id_match(orderid), order_queue.queue)
+        return ret_ind
+    else
+        return nothing
+    end
+end
+
+function raise_sidebook_priorty_via_display_property!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid, displayable::Bool
+)where {Oid,Aid,Sz<:Real,Px<:Real}
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        ret_ind = findfirst(order_id_match(orderid), order_queue.queue)
+        if isnothing(ret_ind)
+            return 0
+        else
+            for ind_to_modify in 1 : (ret_ind - 1)
+                # fill_mode is now a static variable, we need to assign to each order
+                order_queue.queue[ind_to_modify].display = displayable
+            end
+            return (ret_ind - 1)
+        end
+    else
+        return 0
+    end
+end
+
+function reduce_sidebook_priorty_via_display_property!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, orderid::Oid, displayable::Bool
+)where {Oid,Aid,Sz<:Real,Px<:Real}
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        ret_ind = findfirst(order_id_match(orderid), order_queue.queue)
+        if isnothing(ret_ind)
+            return 0
+        else
+            order_queue.queue[ret_ind].display = displayable
+            return 1
+        end
+    else
+        return 0
+    end
+end
+function elevate_sidebook_priority!(
+    sb::OneSidedBook{Sz,Px,Oid,Aid}, price::Px, checked_id::Int,
+)where {Oid,Aid,Sz<:Real,Px<:Real}
+    order_queue = _get_price_queue(sb, price)
+    if !isnothing(order_queue)
+        return !order_queue.queue[checked_id].display
+    else
+        return true
     end
 end

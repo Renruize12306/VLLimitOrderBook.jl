@@ -6,18 +6,30 @@ The original package has the following features:
 * Submit and cancel limit orders and submit market orders.
 * Inspect the order book information and statistics.
 * Save the order book state to a CSV file.
- 
+
 Additionally, the package has fixed the following bugs in the original implementation:
-* The order book does not track specific users, causing the relevant account to not update when an order is matched and removed from the order book.
-* The order book has errors in cross-matching at oneSideBook, causing errors to occur when an order is matched.
+* The order book does not track specific users, causing the relevant account to not get updated when an order is matched and removed from the order book.
+* The order book may allow cross-match limit orders on one side of the book. This is not allowed on most major exchanges. In this package model, we will throw error if such conditions are met.
 
 Based on original package, the following features have been added or modified:
 * The ability to load the order book state from a CSV file.
 * Improved code testing coverage.
-* Added order types for stop-loss and buy stop orders.
-* Implemented a notification feature when orders are matched.
 * Includes benchmarks for performance evaluation.
-* Validates accuracy and correctness of the order book using actual data from [Polygon](https://polygon.io/).
+* Validates accuracy and correctness of the order book from data feed messages from [Nasdaq TotalViewITCH](https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts/NQTVITCHSpecification.pdf), a direct data feed product offered by The Nasdaq Stock Market, LLC.
+
+Based on data feed messages from Nasdaq TotalViewITCH, we also make following changes to enhance the functionality, 
+* We have added Display & Non-Display field to the Order Struct. This is because orders at the same price level may have different priorities based on their Display & Non-Display features. Orders with display feature always have a higher execution priority than Non-Display orders, even if display order have joined orderbook at a later time. This will help us ensure that orders are executed in the right order.
+* We have changed the OrderTrait to be non-static and mutable variable. This is because different orders may have different order traits, and there is no way to distinguish this difference from the order feed of Nasdaq. Therefore, we needed to make changes according to specific data feed messages to ensure that we can handle order executed correctly.
+* We have also added an "allowlocking" boolean field in the OrderTrait. This field is necessary because some orders, such as pegged orders, will allow prices to lock between bid/ask prices (bid/ask price reached a same level). We cannot know this until we receive specific messages from the data feed, i.e when order are executed at different prices. So we need to make changes according to specific data feed messages to ensure that we can handle these types of orders.
+* We have modified the order to be a mutable structure. This will enable us to make changes to the original order object rather than generating a new object, which will enhance the performance and efficiency of our system
+
+
+FAQ:
+
+**Why notification is removed in the latest commit of the code?**
+
+* We did implement notification feature in the earlier [commits](https://github.com/Renruize12306/VLLimitOrderBook.jl/commit/d1773488d154122ad3fe3fe9dc8ca21d96438453), but we then find the that cross matching between bid/ask price is uncommon, it also lower the matching profiency of Limit Order Book. Hence, we simply remove this feature in the later iterations.
+
 
 ## Usage
 
@@ -61,7 +73,11 @@ end
 ```julia
 ob
 ```
-**An example to matching a limit order**
+**An example to matching a market order**
 ```julia
-submit_limit_order!(ob, 111, BUY_ORDER, 99.012, 5, 101111, FILLORKILL_FILLTYPE)
+submit_market_order!(ob, BUY_ORDER, 10)
+```
+**An example to inspect orderbook statistics**
+```julia
+book_depth_info(ob)
 ```

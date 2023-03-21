@@ -49,8 +49,8 @@ end
         submit_limit_order!(ob,orderid,side,price,size,10101)
     end
     
-    @test_throws ErrorException("The orderbook should not be crossed, the buy limit order should not exceed the minimum ASK price") submit_limit_order!(ob, 10086, BUY_ORDER, 110,10101)
-    @test_throws ErrorException("The orderbook should not be crossed, the sell limit order should not exceed the maximus BID price") submit_limit_order!(ob, 10086, SELL_ORDER, 99,10101)
+    @test_throws ErrorException("The orderbook should not be crossed, the bid limit order should not exceed the minimum ASK price") submit_limit_order!(ob, 10086, BUY_ORDER, 110,10101)
+    @test_throws ErrorException("The orderbook should not be crossed, the ask limit order should not exceed the maximus BID price") submit_limit_order!(ob, 10086, SELL_ORDER, 99,10101)
     @test_throws ErrorException("Both limit_price and limit_size must be positive") submit_limit_order!(ob, 10086, BUY_ORDER, -110,10101)
     @test_throws ErrorException("Both limit_price and limit_size must be positive") submit_limit_order!(ob, 10086, BUY_ORDER, 110,-10101)
     new_open_order, cross_match_lst, remaining_size = submit_limit_order!(ob, 10086, SELL_ORDER, 100,10,10101,IMMEDIATEORCANCEL_FILLTYPE)
@@ -82,23 +82,39 @@ end
     for (orderid, price, size, side) in Base.Iterators.take( lmt_order_info_iter, 50 )
         submit_limit_order!(ob,orderid,BUY_ORDER,price,size,10101)
     end
-    mo_matches, mo_ltt = submit_market_order!(ob,SELL_ORDER,100000)
+    mo_matches, mo_ltt = submit_market_order!(ob,BUY_ORDER,100000)
 
     # Tests
     @test length( mo_matches ) == 50
     @test mo_ltt > 0
-    @test isempty(submit_market_order!(ob,SELL_ORDER,10000)[1] )
+    @test isempty(submit_market_order!(ob,BUY_ORDER,10000)[1] )
     @test isempty(ob.bid_orders)
     @test isempty(ob.ask_orders)
 end
-@testset "Test Submit Market Order edeg cases" begin
+
+@testset "MO Liquidity Wipe With Non-Display Order setup" begin # Wipe out book completely, try MOs on empty book
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,20)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    
+    queues = VLLimitOrderBook._get_price_queue(ob.ask_orders, Float32(100.02))
+    order_modified = raise_priorty_via_display_property!(ob, 11, SELL_ORDER, Float32(100.02), false)
+    order_match_lst, shares_left = submit_market_order!(ob, SELL_ORDER, 2, false)
+    @test length(order_match_lst) == 1
+    @test order_match_lst[1].size == 2
+    @test shares_left == 0
+end
+@testset "Test Submit Market Order edge cases" begin
     ob = MyLOBType() #Initialize empty book
     order_info_lst = take(lmt_order_info_iter,6)
     # Add a bunch of orders
     for (orderid, price, size, side) in order_info_lst
         submit_limit_order!(ob,orderid,side,price,size,10101)
     end
-    order_match_lst, shares_left = submit_market_order!(ob,SELL_ORDER,24,ALLORNONE_FILLTYPE)
+    order_match_lst, shares_left = submit_market_order!(ob,BUY_ORDER,24,false,ALLORNONE_FILLTYPE)
     @test length(order_match_lst) == 0
     @test shares_left == 24
 end
@@ -120,7 +136,7 @@ end
 
 
     # execute MO
-    mo_matches, mo_ltt = submit_market_order!(ob,SELL_ORDER,30)
+    mo_matches, mo_ltt = submit_market_order!(ob,BUY_ORDER,30)
     mo_match_sizes = [o.size for o in mo_matches]
 
     # record what is expected to be seen
@@ -166,10 +182,10 @@ end
     Base.show(io, poped_order_1)
     close(io)
     expected_output = "OrderQueue at price=$(bid_order_queue_100_02.price):\n"*
-        " Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101 )\n"*
-        " Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=10, price=100.02, orderid=5, acctid=10101 )\n"*
-        "Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101 )\n"*
-        "Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101 )\n"
+        " Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101, fill_mode=OrderTraits(allornone=false, immediateorcancel=false, allowlocking=false), display=true )\n"*
+        " Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=10, price=100.02, orderid=5, acctid=10101, fill_mode=OrderTraits(allornone=false, immediateorcancel=false, allowlocking=false), display=true )\n"*
+        "Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101, fill_mode=OrderTraits(allornone=false, immediateorcancel=false, allowlocking=false), display=true )\n"*
+        "Order{Int64,Float32,Int64,Int64}( side=OrderSide(Sell), size=4, price=100.02, orderid=4, acctid=10101, fill_mode=OrderTraits(allornone=false, immediateorcancel=false, allowlocking=false), display=true )\n"
     output_contents = read("base_show_orderqueue.txt", String)
     @test output_contents == expected_output
 end
@@ -196,16 +212,8 @@ end
     close(io)
     expected_output = "OrderSide(Sell)\n"*
             "OrderSide(Sell)\n"*
-            "OrderTraits(allornone=$(VANILLA_FILLTYPE.allornone), immediateorcancel=$(VANILLA_FILLTYPE.immediateorcancel))\n"*
-            " Other Properties:\n"*
-            " - isfillorkill=false,\n"*
-            " - allows_book_insert=true,\n"*
-            " - allows_partial_fill=true\n"*
-            "OrderTraits(allornone=$(VANILLA_FILLTYPE.allornone), immediateorcancel=$(VANILLA_FILLTYPE.immediateorcancel))\n"*
-            " Other Properties:\n"*
-            " - isfillorkill=false,\n"*
-            " - allows_book_insert=true,\n"*
-            " - allows_partial_fill=true"
+            "OrderTraits(allornone=$(VANILLA_FILLTYPE.allornone), immediateorcancel=$(VANILLA_FILLTYPE.immediateorcancel), allowlocking=$(VANILLA_FILLTYPE.allowlocking))\n"*
+            "OrderTraits(allornone=$(VANILLA_FILLTYPE.allornone), immediateorcancel=$(VANILLA_FILLTYPE.immediateorcancel), allowlocking=$(VANILLA_FILLTYPE.allowlocking))"
     output_contents = read("base_show_order_property.txt", String)
     @test output_contents == expected_output
     
@@ -233,15 +241,15 @@ end
     @test isnothing(lmt_obj_cancel_2)
 
     # Test that complete MO returns correctly
-    mo_match_list, mo_ltt = submit_market_order!(ob,SELL_ORDER,100)
+    mo_match_list, mo_ltt = submit_market_order!(ob,BUY_ORDER,100)
     @test typeof(mo_match_list) <: Vector{<:Order}
     @test mo_ltt == 0
 
-    mo_match_list, mo_ltt = submit_market_order!(ob,BUY_ORDER,797+13)
+    mo_match_list, mo_ltt = submit_market_order!(ob,SELL_ORDER,797+13)
     @test length(mo_match_list) == 137
     @test mo_ltt == 0
 
-    mo_match_list, mo_ltt = submit_market_order!(ob,BUY_ORDER,13)
+    mo_match_list, mo_ltt = submit_market_order!(ob,SELL_ORDER,13)
     @test !isempty(mo_match_list)
     @test mo_ltt == 0
     @test 13 == sum(x.size for x in mo_match_list)
@@ -483,4 +491,129 @@ end
     "                                                        \n"
     output_contents = read("base_show.txt", String)
     @test output_contents == expected_output
+end
+
+@testset "Test order traits" begin
+    @test VLLimitOrderBook.isfillorkill(VANILLA_FILLTYPE) == false
+    @test VLLimitOrderBook.allows_partial_fill(VANILLA_FILLTYPE) == true
+end
+
+@testset "Test Ordermatching.jl -> cancel_partial_order!" begin
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    
+    
+    poped_size = cancel_partial_order!(ob, 4, SELL_ORDER, 100.02, 1)
+    @test poped_size == 1
+    
+    poped_size = cancel_partial_order!(ob, 2, BUY_ORDER, 99.98, 2)
+    
+    @test poped_size == 2
+    
+    poped_size = cancel_partial_order!(ob, 2, BUY_ORDER, 99.98, 3)
+    
+    @test poped_size == 3
+    
+    poped_size = cancel_partial_order!(ob, 3, BUY_ORDER, 99.97, 3)
+    
+    @test poped_size == 3
+
+    poped_size = cancel_partial_order!(ob, 3, BUY_ORDER, 99.9, 3)
+    @test isnothing(poped_size)
+end
+
+@testset "Test Ordermatching.jl -> check_order_with_id_and_price!" begin
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,6)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+
+    priority = check_market_order_priority_with_order_id!(ob, 6, BUY_ORDER, 99.98)
+    @test priority == 2
+
+    priority = check_market_order_priority_with_order_id!(ob, 2, BUY_ORDER, 99.98)
+    @test priority == 1
+
+    priority = check_market_order_priority_with_order_id!(ob, 4, BUY_ORDER, 99.98)
+    @test isnothing(priority)
+
+    priority = check_market_order_priority_with_order_id!(ob, 4, BUY_ORDER, 99.00)
+    @test isnothing(priority)
+
+    priority = check_market_order_priority_with_order_id!(ob, 1, SELL_ORDER, 100.03)
+    @test priority == 1
+end
+
+@testset "Test Ordermatching.jl -> raise_sidebook_priorty_via_display_property!" begin
+
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,20)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+
+    queues = VLLimitOrderBook._get_price_queue(ob.ask_orders, Float32(100.03))
+    order_modified = raise_priorty_via_display_property!(ob, 13, SELL_ORDER, Float32(100.03), false)
+    for i in 1 : 2
+        @test queues.queue[i].display == false
+    end
+    @test order_modified  == 2
+    order_modified = raise_priorty_via_display_property!(ob, 13, SELL_ORDER, Float32(100.99), false)
+    @test order_modified  == 0
+    order_modified = raise_priorty_via_display_property!(ob, 999, SELL_ORDER, Float32(100.03), false)
+    @test order_modified  == 0
+    order_modified = raise_priorty_via_display_property!(ob, 999, BUY_ORDER, Float32(100.03), false)
+    @test order_modified  == 0
+end
+
+@testset "Test Ordermatching.jl -> reduce_priorty_via_display_property!" begin
+
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,20)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    
+    queues = VLLimitOrderBook._get_price_queue(ob.ask_orders, Float32(100.03))
+    order_modified = reduce_priorty_via_display_property!(ob, 13, SELL_ORDER, Float32(100.03), false)
+    
+    @test queues.queue[3].display == false
+    @test order_modified  == 1
+    order_modified = reduce_priorty_via_display_property!(ob, 13, SELL_ORDER, Float32(100.99), false)
+    @test order_modified  == 0
+    order_modified = reduce_priorty_via_display_property!(ob, 999, SELL_ORDER, Float32(100.03), false)
+    @test order_modified  == 0
+    
+    order_modified = reduce_priorty_via_display_property!(ob, 999, BUY_ORDER, Float32(100.03), false)
+    @test order_modified  == 0
+end
+
+@testset "Test Ordermatching.jl -> elevate_priority!" begin
+
+    ob = MyLOBType() #Initialize empty book
+    order_info_lst = take(lmt_order_info_iter,20)
+    # Add a bunch of orders
+    for (orderid, price, size, side) in order_info_lst
+        submit_limit_order!(ob,orderid,side,price,size,10101)
+    end
+    
+    queues = VLLimitOrderBook._get_price_queue(ob.ask_orders, Float32(100.03))
+    order_modified = raise_priorty_via_display_property!(ob, 13, SELL_ORDER, Float32(100.03), false)
+    check_id = check_market_order_priority_with_order_id!(ob, 13, SELL_ORDER, Float32(100.03))
+    need_higher_priority = elevate_priority!(ob, check_id, SELL_ORDER, Float32(100.03))
+    @test need_higher_priority == false
+    need_higher_priority = elevate_priority!(ob, 1, SELL_ORDER, Float32(100.03))
+    @test need_higher_priority == true
+    need_higher_priority = elevate_priority!(ob, 1, BUY_ORDER, Float32(99.97))
+    @test need_higher_priority == false
+    need_higher_priority = elevate_priority!(ob, 1, BUY_ORDER, Float32(99.93))
+    @test need_higher_priority == true
 end
