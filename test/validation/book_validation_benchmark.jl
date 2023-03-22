@@ -144,11 +144,12 @@ begin
         # benchmark begins
         
         bc = @benchmarkable processing_vector_of_dict_messages($ob, $dicts_msgs)
-        bcmk = run(bc, samples = 15, evals = 1);
+        bcmk = run(bc, samples = 3, evals = 1);
         # bcmk = run(bc);
         return ob, bcmk
     end
     function output_io(output, bcmk ,order_messages)
+        write(output, "\n===========================================================================\n")
         write(output, "\nSource:\t" * order_messages * "\n\n")
         Base.show(output,"text/plain", bcmk)
         write(output, "\n")
@@ -157,6 +158,7 @@ end
 
 begin
     output = open(pwd()*"/test/validation/book_validation_benchmark_output.txt", "w");
+    
     order_messages = "data/messages/03272019.PSX_ITCH50_MSFT_message.csv"
     ob, bcmk = testing(1, 503954, 36, order_messages);
     output_io(output, bcmk ,order_messages)
@@ -180,6 +182,15 @@ begin
     order_messages = "data/messages/01302020.NASDAQ_ITCH50_QQQ_message.csv"
     ob, bcmk = testing(1, 4754517, 100, order_messages);
     output_io(output, bcmk ,order_messages)
+
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_AMZN_message.csv"
+    ob, bcmk = testing(1, 670233, 100, order_messages);
+    output_io(output, bcmk ,order_messages)
+
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_TSLA_message.csv"
+    ob, bcmk = testing(1, 1030765, 100, order_messages);
+    output_io(output, bcmk ,order_messages)
+
     
     close(output)
 end
