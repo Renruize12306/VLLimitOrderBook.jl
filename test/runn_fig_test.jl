@@ -7,9 +7,9 @@ begin
         "stress_test_conc_num_proc_fig.jl"
         ]
     for file in arr
-        println("Started", file)
+        println("Started\t", file)
         include(file)
-        println("Finished", file)
+        println("Finished\t", file)
     end
 end
 

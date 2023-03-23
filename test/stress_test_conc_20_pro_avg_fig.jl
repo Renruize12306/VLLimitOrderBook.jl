@@ -107,7 +107,7 @@ for cnt in 1 : 2
     # local num_procs = 20
     # local order_array = 5000 : 5000 : 30_000
     # time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
-    println(time_vol_array_sing)
+    # println(time_vol_array_sing)
     push!(time_vol_array, time_vol_array_sing)
 end
 tuple_res = sum(time_vol_array) / length(time_vol_array)

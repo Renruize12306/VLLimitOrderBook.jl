@@ -80,7 +80,7 @@ time_vol_array = Vector{Any}()
 for cnt in 1 : 5
     time_vol_array_sing = market_order_submission_group_testing(5000, 10_000_00)
     # time_vol_array_sing = market_order_submission_group_testing(5000, 105000)
-    println(time_vol_array_sing)
+    # println(time_vol_array_sing)
     push!(time_vol_array, time_vol_array_sing)
 end
 time_vol = sum(time_vol_array) / length(time_vol_array)

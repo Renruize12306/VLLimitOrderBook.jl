@@ -88,7 +88,7 @@ for cnt in 1 : 5
     # local input = 1 : 4
     res_sing = time_n_num_process_testing(input, 1_000_000)
     # res_sing = time_n_num_process_testing(input, 1_000)
-    println(res_sing)
+    # println(res_sing)
     push!(array_res_vector, res_sing)
 end
 array_res = sum(array_res_vector) / length(array_res_vector)
