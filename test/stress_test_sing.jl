@@ -1,5 +1,5 @@
 using VLLimitOrderBook
-using Base.Iterators: zip,cycle,take,filter, flatten
+using Base.Iterators: zip,cycle,take,filter, flatten, partition
 MyOrderSubTypes = (Int64,Float32,Int64,Int64) # define types for Order Size, Price, Order IDs, Account IDs
 MyOrderType = Order{MyOrderSubTypes...}
 MyLOBType = OrderBook{MyOrderSubTypes...}
@@ -13,7 +13,7 @@ size_iter = cycle([2, 9, 5, 3, 3, 4, 10, 15, 1, 6, 13, 11, 4, 1, 5, 1, 3, 7, 9, 
 lmt_order_info_iter = zip(orderid_iter,price_iter,size_iter,side_iter)
 user_id = 10011
 
-function stress_test(num_orders::Int, num_trades::Int)
+function stress_test(num_orders::Int)
     # create order book
     ob = MyLOBType()
     
@@ -22,18 +22,12 @@ function stress_test(num_orders::Int, num_trades::Int)
     @time for (orderid, price, size, side) in order_info_lst
         submit_limit_order!(ob,orderid,side,price,size, 10011)
     end
-    
-    # order_info_lst = take(side_iter,Int64(num_trades)) |> collect
-
-    # # generate random trades
-    # for i in order_info_lst
-    #     submit_market_order!(ob,i, 1)
-    # end
+    return ob
 end
 
 
-function stress_test_wrapper(num_orders::Int, num_trades::Int)
-    stress_test(num_orders, num_trades)
+function stress_test_wrapper(num_orders::Int)
+    stress_test(num_orders)
 end
 
-stress_test_wrapper(10_000_0, 10_000_00)
+stress_test_wrapper(100_000_0)
