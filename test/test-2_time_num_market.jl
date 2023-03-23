@@ -50,13 +50,13 @@ function market_order_submission_group_testing(start::Int, last::Int)
 end
 
 
-time_vol = market_order_submission_group_testing(1000, 10_000_0)
+time_vol = market_order_submission_group_testing(5000, 10_000_00)
 x_array = time_vol[1]
 y_array_single = time_vol[2]
 y_array_ratio = time_vol[3]
-scatter!(x_array, y_array_single, label="Performance_single", mc=:white, msc=colorant"#EF4035", legend=:bottomright, 
+scatter(x_array, y_array_single, label="put one market order", mc=:white, msc=colorant"#EF4035", legend=:topleft, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-scatter!(x_array, y_array_ratio, label="Performance_ratio", mc=:white, msc=colorant"#375CD9", legend=:bottomright, 
+scatter!(x_array, y_array_ratio, label="put 10% market order", mc=:white, msc=colorant"#375CD9", legend=:topleft, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-xlabel!("Number of Orders Placed", fontsize=18)
+xlabel!("Number of Limit Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)

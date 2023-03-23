@@ -48,10 +48,10 @@ end
 
 # time_vol = time_n_vol_group_testing(10_000_000)
 
-time_vol = time_n_vol_group_testing(2000, 10_000_0)
+time_vol = time_n_vol_group_testing(5000, 10_000_00)
 x_array = time_vol[1]
 y_array = time_vol[2]
-scatter!(x_array, y_array, label="Performance", mc=:white, msc=colorant"#EF4035", legend=:bottomright, 
+scatter(x_array, y_array, label="Performance", mc=:white, msc=colorant"#EF4035", legend=:best, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-xlabel!("Number of Orders Placed", fontsize=18)
+xlabel!("Number of Limit Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
