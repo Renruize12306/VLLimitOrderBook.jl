@@ -72,16 +72,42 @@ function time_n_num_process_testing(NUM_PROCESSES_ARRAY, ORDER_PLACED)
         push!(time_consume_array, average_time)
         push!(num_process_array, num_procs)
     end
-    return (num_process_array, time_consume_array)
+    return [num_process_array, time_consume_array]
 end
 
 input = 1 : 20
 # input = [8, 10]
-tuple_res = time_n_num_process_testing(input, 100_000_0)
+# array_res = time_n_num_process_testing(input, 1_000_000)
 
-x_array = tuple_res[1]
-y_array = tuple_res[2]
+
+
+
+
+array_res_vector = Vector{Any}()
+for cnt in 1 : 5
+    # local input = 1 : 4
+    res_sing = time_n_num_process_testing(input, 1_000_000)
+    # res_sing = time_n_num_process_testing(input, 1_000)
+    println(res_sing)
+    push!(array_res_vector, res_sing)
+end
+array_res = sum(array_res_vector) / length(array_res_vector)
+
+
+
+
+
+
+x_array = array_res[1]
+y_array = array_res[2]
+
+
 scatter(x_array, y_array, label="Performance", mc=:white, msc=colorant"#EF4035", legend=:best, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-xlabel!("Concurrency Level", fontsize=18)
+xlabel!("Number of Concurrent Threads)", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
+
+savefig("test/fig/stress_test_conc_num_proc_fig.png")
+
+
+# include("test/stress_test_conc_num_proc_fig.jl")

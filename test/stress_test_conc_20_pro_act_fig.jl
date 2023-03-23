@@ -54,8 +54,9 @@ function time_n_num_orders_testing(num_procs, NUM_ORDER_PLACED_ARRAY)
             num_procs_to_open = num_procs + (num_order % num_procs == 0 ? 0 : 1)
             addprocs(num_procs_to_open; exeflags=`--project=$(Base.active_project())`)
 
-            global ob
+            global ob, times
             ob = MyLOBType()
+            times = Vector{Float32}()
             splited_array = split_array(order_info_lst, num_procs) |> collect
             processes = Dict{Any, Any}()
             local array_idx = 1
@@ -71,7 +72,12 @@ function time_n_num_orders_testing(num_procs, NUM_ORDER_PLACED_ARRAY)
                 # rmprocs(val,waitfor=0)
                 rmprocs(val)
             end
-            average_time = sum(times) / length(times)
+            max_time = maximum(times)
+            # for time_sing in times
+            #     println(time_sing)
+            # end
+            # println("length: ", length(times))
+            # println("Maximum: ", max_time)
             # println(ob)
         end
 
@@ -85,17 +91,36 @@ function time_n_num_orders_testing(num_procs, NUM_ORDER_PLACED_ARRAY)
             # println(ob_sing)
         end
 
-        push!(time_20_proc_array, average_time)
+        push!(time_20_proc_array, max_time)
         push!(num_order_array, num_order)
         push!(time_sing_proc_array, t_single)
     end
-    return (num_order_array, time_20_proc_array, time_sing_proc_array)
+    return [num_order_array, time_20_proc_array, time_sing_proc_array]
 end
 
 num_procs = 20
 order_array = 5000 : 5000 : 10_000_00
-order_array = 5000 : 5000 : 30_000
-tuple_res = time_n_num_orders_testing(num_procs, order_array)
+# order_array = 5000 : 5000 : 20_000
+# tuple_res = time_n_num_orders_testing(num_procs, order_array)
+
+
+
+
+time_vol_array = Vector{Any}()
+for cnt in 1 : 2
+    time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
+    # local num_procs = 20
+    # local order_array = 5000 : 5000 : 30_000
+    # time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
+    println(time_vol_array_sing)
+    push!(time_vol_array, time_vol_array_sing)
+end
+tuple_res = sum(time_vol_array) / length(time_vol_array)
+
+
+
+
+
 
 x_array = tuple_res[1]
 x_array = x_array[1 : end]
@@ -103,9 +128,27 @@ y_array_20_process = tuple_res[2]
 y_array_20_process = y_array_20_process[1 : end]
 y_array_sing_process = tuple_res[3]
 y_array_sing_process = y_array_sing_process[1 : end]
-scatter(x_array, y_array_20_process, label="Performance 20 process", mc=:white, msc=colorant"#EF4035", legend=:best, 
+
+
+scatter(x_array, y_array_20_process, label="Actual performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-scatter!(x_array, y_array_sing_process, label="Performance single process", mc=:white, msc=colorant"#375CD9", legend=:best, 
+scatter!(x_array, y_array_sing_process, label="Actual performance on single process", mc=:white, msc=colorant"#375CD9", legend=:best, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-xlabel!("Number of Order Placed", fontsize=18)
+xlabel!("Number of Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
+
+savefig("test/fig/stress_test_conc_20_pro_act_fig_all.png")
+
+
+
+
+
+scatter(x_array, y_array_20_process, label="Actual performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
+bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
+xlabel!("Number of Orders Placed", fontsize=18)
+ylabel!("Processing Time (seconds)", fontsize=18)
+
+savefig("test/fig/stress_test_conc_20_pro_act_fig_partial.png")
+
+
+# include("test/stress_test_conc_20_pro_act_fig.jl")

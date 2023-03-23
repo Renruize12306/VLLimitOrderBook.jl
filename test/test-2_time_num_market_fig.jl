@@ -52,7 +52,7 @@ function market_order_submission_group_testing(start::Int, last::Int)
         if i == start
             continue
         end
-        
+        println("Order Volumes in all levels: ", i)
         push!(vols, i)
         push!(times_single, tuple[1])
         push!(times_ratio_1, tuple[2])
@@ -62,35 +62,56 @@ function market_order_submission_group_testing(start::Int, last::Int)
         push!(times_ratio_5, tuple[6])
 
     end
-    return (vols,
+    return [vols,
     times_single, 
     times_ratio_1,
     times_ratio_2,
     times_ratio_3,
     times_ratio_4,
-    times_ratio_5)
+    times_ratio_5]
 end
 
 
-time_vol = market_order_submission_group_testing(5000, 10_000_00)
-x_array = time_vol[1]
+# time_vol = market_order_submission_group_testing(5000, 10_000_00)
+
+
+
+time_vol_array = Vector{Any}()
+for cnt in 1 : 5
+    time_vol_array_sing = market_order_submission_group_testing(5000, 10_000_00)
+    # time_vol_array_sing = market_order_submission_group_testing(5000, 105000)
+    println(time_vol_array_sing)
+    push!(time_vol_array, time_vol_array_sing)
+end
+time_vol = sum(time_vol_array) / length(time_vol_array)
+
+
+
+x_array = time_vol[1] / 2
 y_array_single = time_vol[2]
 y_array_ratio_1 = time_vol[3]
 y_array_ratio_2 = time_vol[4]
 y_array_ratio_3 = time_vol[5]
 y_array_ratio_4 = time_vol[6]
 y_array_ratio_5 = time_vol[7]
-scatter(x_array, y_array_single, label="put one mkt order one side", mc=:white, msc=colorant"#1A1615", legend=:topleft, 
+
+
+scatter(x_array, y_array_single, label="fill one limit order", mc=:white, msc=colorant"#1A1615", legend=:topleft, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-scatter!(x_array, y_array_ratio_1, label="put 20% mkt order one side", mc=:white, msc=colorant"#375CD9", legend=:topleft, markershape=:star5,
+scatter!(x_array, y_array_ratio_1, label="fill 20% limit orders", mc=:white, msc=colorant"#375CD9", legend=:topleft, markershape=:star5,
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-scatter!(x_array, y_array_ratio_2, label="put 40% mkt order one side", mc=:white, msc=colorant"#A83E32", legend=:topleft, markershape=:heptagon,
+scatter!(x_array, y_array_ratio_2, label="fill 40% limit orders", mc=:white, msc=colorant"#A83E32", legend=:topleft, markershape=:heptagon,
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-scatter!(x_array, y_array_ratio_3, label="put 60% mkt order one side", mc=:white, msc=colorant"#2E5C10", legend=:topleft, markershape=:dtriangle,
+scatter!(x_array, y_array_ratio_3, label="fill 60% limit orders", mc=:white, msc=colorant"#2E5C10", legend=:topleft, markershape=:dtriangle,
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-scatter!(x_array, y_array_ratio_4, label="put 80% mkt order one side", mc=:white, msc=colorant"#4F105C", legend=:topleft, markershape=:diamond,
+scatter!(x_array, y_array_ratio_4, label="fill 80% limit orders", mc=:white, msc=colorant"#4F105C", legend=:topleft, markershape=:diamond,
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-scatter!(x_array, y_array_ratio_5, label="put 100% mkt order one side", mc=:white, msc=colorant"#ADB002", legend=:topleft, markershape=:octagon,
+scatter!(x_array, y_array_ratio_5, label="fill all limit orders", mc=:white, msc=colorant"#ADB002", legend=:topleft, markershape=:octagon,
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-xlabel!("Number of Limit Orders Placed", fontsize=18)
+xlabel!("Number of Sell Limit Orders at All Price Levels", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
+
+savefig("test/fig/test-2_time_num_market_fig.png")
+
+
+# include("test/test-2_time_num_market_fig.jl")

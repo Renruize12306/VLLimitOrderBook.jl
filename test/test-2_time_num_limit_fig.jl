@@ -39,19 +39,37 @@ function time_n_vol_group_testing(start::Int, last::Int)
         if i == start
             continue
         end
+        println("Order Volumes in all levels: ", i)
         push!(times, t)
         push!(vols, i)
     end
-    return (vols,times)
+    return [vols,times]
 end
 
 
 # time_vol = time_n_vol_group_testing(10_000_000)
 
-time_vol = time_n_vol_group_testing(5000, 10_000_00)
+time_vol_array = Vector{Any}()
+for cnt in 1 : 5
+    time_vol_array_sing = time_n_vol_group_testing(5000, 10_000_00)
+    # time_vol_array_sing = time_n_vol_group_testing(5000, 25000)
+    println(time_vol_array_sing)
+    push!(time_vol_array, time_vol_array_sing)
+end
+time_vol = sum(time_vol_array) / length(time_vol_array)
+
+
+
 x_array = time_vol[1]
 y_array = time_vol[2]
+
+
 scatter(x_array, y_array, label="Performance", mc=:white, msc=colorant"#EF4035", legend=:best, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
 xlabel!("Number of Limit Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
+
+savefig("test/fig/test-2_time_num_limit_fig.png")
+
+
+# include("test/test-2_time_num_limit_fig.jl")

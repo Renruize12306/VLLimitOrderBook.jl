@@ -160,7 +160,7 @@ begin
     output = open(pwd()*"/test/validation/book_validation_benchmark_output.txt", "w");
     
     order_messages = "data/messages/03272019.PSX_ITCH50_MSFT_message.csv"
-    ob, bcmk = testing(1, 503954, 36, order_messages);
+    ob, bcmk = testing(1, 503954, 20, order_messages);
     output_io(output, bcmk ,order_messages)
 
     order_messages = "data/messages/01302020.NASDAQ_ITCH50_INTC_message.csv"
@@ -194,10 +194,3 @@ begin
     
     close(output)
 end
-
-# function foo(a::Int, b::Int)
-#     return a + b
-# end
-# bc = @benchmarkable foo(1,3)
-# run(bc)#, samples = 1);
-# res = run(bc, samples = 90000, evals = 3);
