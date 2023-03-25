@@ -5,4 +5,5 @@
 test/dummy
 data/
 test/fig/
-test/figures_input/server_client/mac-mac
+test/figures_input/server_client/linux*
+test/figures_input/server_client/mac*

@@ -23,7 +23,7 @@ function limit_order_submission_upper_limit(uppder_limit::Int, mod::Int)
         push!(json_vector, dict_json)
     end
 
-    HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
+    HTTP.WebSockets.open("ws://10.49.32.162:8081") do ws
         cnt = 0
         time_start = now().instant.periods.value
         for json in json_vector
@@ -59,7 +59,7 @@ lmt_order_info_iter = zip(orderid_iter,price_iter,size_iter,sign_iter)
 
 function start_client_and_save_file(mod::Int)
    
-    time_sent_vec, num_sent_res = limit_order_submission_upper_limit(1000_00, mod)
+    time_sent_vec, num_sent_res = limit_order_submission_upper_limit(1000_000, mod)
     # time_sent_vec, num_sent_res = limit_order_submission_upper_limit(100, 20)
 
 
@@ -74,5 +74,5 @@ function start_client_and_save_file(mod::Int)
     println("finished writing client")
 end
 
-start_client_and_save_file(20000)
+start_client_and_save_file(1000)
 # include("test/figures_input/server_client/talking_test_client.jl")

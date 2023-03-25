@@ -16,7 +16,7 @@ function assing_valiables(scale)
         if curline_time_rec_vec == ""
             break
         end
-        if cnt < scale
+        if cnt < scale # == 0
             push!(num_sent_vec, parse(Float64, curline_num_sent_vec))
             push!(time_sent_vec, parse(Float64, curline_time_sent_vec))
             push!(time_rec_vec, parse(Float64, curline_time_rec_vec))
@@ -26,7 +26,7 @@ function assing_valiables(scale)
     return [num_sent_vec, time_sent_vec, time_rec_vec]
 end
 
-result_vec = assing_valiables(5)
+result_vec = assing_valiables(100)
 
 x_array = result_vec[1]
 # x_array = x_array[1 : end - 1]
