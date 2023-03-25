@@ -123,11 +123,11 @@ tuple_res = sum(time_vol_array) / length(time_vol_array)
 
 
 x_array = tuple_res[1]
-x_array = x_array[1 : end]
+x_array = x_array[2 : end]
 y_array_20_process = tuple_res[2]
-y_array_20_process = y_array_20_process[1 : end]
+y_array_20_process = y_array_20_process[2 : end]
 y_array_sing_process = tuple_res[3]
-y_array_sing_process = y_array_sing_process[1 : end]
+y_array_sing_process = y_array_sing_process[2 : end]
 
 
 scatter(x_array, y_array_20_process, label="Average performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 

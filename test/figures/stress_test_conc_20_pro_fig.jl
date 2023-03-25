@@ -43,7 +43,8 @@ end
 function time_n_num_orders_testing(num_procs, NUM_ORDER_PLACED_ARRAY)
     
     
-    time_20_proc_array = Vector{Float32}()
+    time_20_proc_max_array = Vector{Float32}()
+    time_20_proc_avg_array = Vector{Float32}()
     time_sing_proc_array = Vector{Float32}()
     num_order_array = Vector{Int64}()
 
@@ -73,12 +74,16 @@ function time_n_num_orders_testing(num_procs, NUM_ORDER_PLACED_ARRAY)
                 rmprocs(val)
             end
             max_time = maximum(times)
-            # for time_sing in times
-            #     println(time_sing)
-            # end
-            # println("length: ", length(times))
-            # println("Maximum: ", max_time)
-            # println(ob)
+            average_time = sum(times) / length(times)
+            begin
+                for time_sing in times
+                    println(time_sing)
+                end
+                println("length: ", length(times))
+                println("Maximum: ", max_time)
+                println("Average: ", average_time)
+                println(ob)
+            end
         end
 
         begin # this is the single process completation time
@@ -90,12 +95,12 @@ function time_n_num_orders_testing(num_procs, NUM_ORDER_PLACED_ARRAY)
             end
             # println(ob_sing)
         end
-
-        push!(time_20_proc_array, max_time)
+        push!(time_20_proc_avg_array, average_time)
+        push!(time_20_proc_max_array, max_time)
         push!(num_order_array, num_order)
         push!(time_sing_proc_array, t_single)
     end
-    return [num_order_array, time_20_proc_array, time_sing_proc_array]
+    return [num_order_array, time_20_proc_max_array, time_sing_proc_array, time_20_proc_avg_array]
 end
 
 num_procs = 20
@@ -108,11 +113,13 @@ order_array = 5000 : 5000 : 10_000_00
 
 time_vol_array = Vector{Any}()
 for cnt in 1 : 2
-    time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
-    # local num_procs = 20
-    # local order_array = 5000 : 5000 : 30_000
     # time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
-    # println(time_vol_array_sing)
+    begin
+        local num_procs = 20
+        local order_array = 5000 : 5000 : 20_000
+        time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
+        println(time_vol_array_sing)
+    end
     push!(time_vol_array, time_vol_array_sing)
 end
 tuple_res = sum(time_vol_array) / length(time_vol_array)
@@ -123,14 +130,16 @@ tuple_res = sum(time_vol_array) / length(time_vol_array)
 
 
 x_array = tuple_res[1]
-x_array = x_array[1 : end]
-y_array_20_process = tuple_res[2]
-y_array_20_process = y_array_20_process[1 : end]
+x_array = x_array[2 : end]
+y_array_20_max_process = tuple_res[2]
+y_array_20_max_process = y_array_20_max_process[2 : end]
 y_array_sing_process = tuple_res[3]
-y_array_sing_process = y_array_sing_process[1 : end]
+y_array_sing_process = y_array_sing_process[2 : end]
+y_array_20_avg_process = tuple_res[4]
+y_array_20_avg_process = y_array_20_avg_process[2 : end]
 
 
-scatter(x_array, y_array_20_process, label="Actual performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
+scatter(x_array, y_array_20_max_process, label="Actual performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
 scatter!(x_array, y_array_sing_process, label="Actual performance on single process", mc=:white, msc=colorant"#375CD9", legend=:best, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
@@ -143,12 +152,36 @@ savefig("test/fig/stress_test_conc_20_pro_act_fig_all.png")
 
 
 
-scatter(x_array, y_array_20_process, label="Actual performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
+scatter(x_array, y_array_20_max_process, label="Actual performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
 bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
 xlabel!("Number of Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
 savefig("test/fig/stress_test_conc_20_pro_act_fig_partial.png")
+
+
+
+
+
+scatter(x_array, y_array_20_avg_process, label="Average performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
+bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
+scatter!(x_array, y_array_sing_process, label="Average performance on single process", mc=:white, msc=colorant"#375CD9", legend=:best, 
+bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
+xlabel!("Number of Orders Placed", fontsize=18)
+ylabel!("Processing Time (seconds)", fontsize=18)
+
+savefig("test/fig/stress_test_conc_20_pro_avg_fig_all.png")
+
+
+
+
+
+scatter(x_array, y_array_20_avg_process, label="Average performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
+bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
+xlabel!("Number of Orders Placed", fontsize=18)
+ylabel!("Processing Time (seconds)", fontsize=18)
+
+savefig("test/fig/stress_test_conc_20_pro_avg_fig_partial.png")
 
 
 # include("test/stress_test_conc_20_pro_act_fig.jl")

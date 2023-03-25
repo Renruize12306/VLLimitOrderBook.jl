@@ -99,7 +99,10 @@ array_res = sum(array_res_vector) / length(array_res_vector)
 
 
 x_array = array_res[1]
+x_array = x_array[2 : end]
 y_array = array_res[2]
+y_array = y_array[2 : end]
+
 
 
 scatter(x_array, y_array, label="Performance", mc=:white, msc=colorant"#EF4035", legend=:best, 
