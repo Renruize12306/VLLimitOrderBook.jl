@@ -52,7 +52,7 @@ function market_order_submission_group_testing(start::Int, last::Int)
         if i == start
             continue
         end
-        println("Order Volumes in all levels: ", i)
+        # println("Order Volumes in all levels: ", i)
         push!(vols, i)
         push!(times_single, tuple[1])
         push!(times_ratio_1, tuple[2])

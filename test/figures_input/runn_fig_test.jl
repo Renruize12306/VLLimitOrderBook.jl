@@ -12,4 +12,4 @@ begin
     end
 end
 
-# include("test/figures/runn_fig_test.jl")
+# include("test/figures_input/runn_fig_test.jl")

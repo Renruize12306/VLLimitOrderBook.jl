@@ -57,7 +57,7 @@ function time_n_num_process_testing(NUM_PROCESSES_ARRAY, ORDER_PLACED)
         local array_idx = 1
 
         for id in workers()
-            println("workers: ", id, "\tarray_indx: ", array_idx)
+            # println("workers: ", id, "\tarray_indx: ", array_idx)
             tmp = array_idx
             task = @async stress_test(splited_array[tmp], id)
             processes[task] = id

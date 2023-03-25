@@ -10,7 +10,7 @@ function process_msg(msg, mod::Int)
             0 -- submit limit order
             1 -- submit market order
         =#
-        println(msg)
+        # println(msg)
         order_side_converted = msg["order_side"] > 0 ? SELL_ORDER : BUY_ORDER
         if type == "0"
             submit_limit_order!(ob, msg["order_id"], order_side_converted, msg["order_price"], msg["order_size"], msg["mpid"])
@@ -38,7 +38,7 @@ function server_single_run(mod::Int)
                     process_msg(ds, mod)
                     cnt += 1
                     if cnt % mod == 0
-                        println(msg)
+                        # println(msg)
                         time_stop = now().instant.periods.value
                         push!(vector_res, time_stop - time_start)
                     end
@@ -59,13 +59,29 @@ MyLOBType = OrderBook{MyOrderSubTypes...}
 
 ob = MyLOBType()
 
-server, time_rec_vec = server_single_run(20)
+function write_io(file_name::String, data_vector::Vector)
+    io = open(file_name, "w");
+    for data in data_vector
+        # println(data)
+        write(io, string(data) * "\n")
+    end
+    close(io)
+end
 
-time_rec_vec = time_rec_vec .- time_rec_vec[1]
 
 
-time_rec_vec = time_rec_vec[2 : end]
 
-# include("test/talking_test_server.jl")
+function dump_file(time_rec_vec::Vector)
+    time_rec_vec = time_rec_vec .- time_rec_vec[1]
+    time_rec_vec = time_rec_vec[2 : end]
+    write_io("test/figures_input/server_client/data/time_rec_vec.txt", time_rec_vec)
+    println("finished writing server")
+end
+
+server, time_rec_vec = server_single_run(20000)
+
+
+# include("test/figures_input/server_client/talking_test_server.jl")
 # close(server)
+# dump_file(time_rec_vec)
 

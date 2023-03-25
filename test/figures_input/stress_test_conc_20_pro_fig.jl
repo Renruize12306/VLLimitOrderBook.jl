@@ -50,7 +50,7 @@ function time_n_num_orders_testing(num_procs, NUM_ORDER_PLACED_ARRAY)
 
     for num_order in NUM_ORDER_PLACED_ARRAY
         order_info_lst = take(lmt_order_info_iter,Int64(num_order)) |> collect
-        println("NUM_ORDER_PLACED: ", num_order)
+        # println("NUM_ORDER_PLACED: ", num_order)
         begin # this is the 20 process completation time
             num_procs_to_open = num_procs + (num_order % num_procs == 0 ? 0 : 1)
             addprocs(num_procs_to_open; exeflags=`--project=$(Base.active_project())`)

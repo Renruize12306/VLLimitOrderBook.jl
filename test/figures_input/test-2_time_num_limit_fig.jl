@@ -39,7 +39,7 @@ function time_n_vol_group_testing(start::Int, last::Int)
         if i == start
             continue
         end
-        println("Order Volumes in all levels: ", i)
+        # println("Order Volumes in all levels: ", i)
         push!(times, t)
         push!(vols, i)
     end
