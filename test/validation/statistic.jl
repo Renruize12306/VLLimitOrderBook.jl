@@ -57,38 +57,40 @@ begin
             mapping[dict["order_type"]] += 1;
         end
         close(io_order_messages)
-        return mapping, n
+        ratio = Dict{Any, Any}()
+        for (key, val) in mapping
+            ratio[key] = val/n
+        end
+        println("========================================================================")
+        println(order_messages, "\n\n", mapping)
+        println("\n\n", ratio)
+        println("\nMsg count, ", n, "\n")
+
+        return mapping, n, ratio
     end
 end
 
 begin
-    order_messages = "data/messages/03272019.PSX_ITCH50_MSFT_message.csv"
-    dict, n = testing(503954, order_messages);
-    println(order_messages, "\n\n", dict)
-    println("\nMsg count, ", n)
-
     order_messages = "data/messages/01302020.NASDAQ_ITCH50_INTC_message.csv"
-    dict, n = testing(1601350, order_messages);
-    println(order_messages, "\n\n", dict)
-    println("\nMsg count, ", n)
+    dict, n, ratio = testing(1601350, order_messages);
 
     order_messages = "data/messages/01302020.NASDAQ_ITCH50_AAPL_message.csv"
-    dict, n = testing(2008467, order_messages);
-    println(order_messages, "\n\n", dict)
-    println("\nMsg count, ", n)
+    dict, n, ratio = testing(2008467, order_messages);
 
     order_messages = "data/messages/01302020.NASDAQ_ITCH50_MSFT_message.csv"
-    dict, n = testing(1854140, order_messages);
-    println(order_messages, "\n\n", dict)
-    println("\nMsg count, ", n)
+    dict, n, ratio = testing(1854140, order_messages);
 
     order_messages = "data/messages/01302020.NASDAQ_ITCH50_SPY_message.csv"
-    dict, n = testing(4468109, order_messages);
-    println(order_messages, "\n\n", dict)
-    println("\nMsg count, ", n)
+    dict, n, ratio = testing(4468109, order_messages);
 
     order_messages = "data/messages/01302020.NASDAQ_ITCH50_QQQ_message.csv"
-    dict, n = testing(4754517, order_messages);
-    println(order_messages, "\n\n", dict)
-    println("\nMsg count, ", n)
+    dict, n, ratio = testing(4754517, order_messages);
+
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_AMZN_message.csv"
+    dict, n, ratio = testing(670233, order_messages);
+
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_TSLA_message.csv"
+    dict, n, ratio = testing(1030765, order_messages);
 end
+
+# include("test/validation/statistic.jl")
