@@ -56,7 +56,7 @@ function test_shape_time_function(order_upper_bound::Int, shape_upper_bound::Int
     time_vec = Vector{Any}()
     # ob_vec = Vector{Any}()
     for shape_single in shapes
-        println("Shape\t", shape_single)
+        # println("Shape\t", shape_single)
         t, ob = test_shape(order_upper_bound, shape_single)
         push!(shape_vec, shape_single)
         push!(time_vec,t)
@@ -71,8 +71,8 @@ end
 time_shape_array = Vector{Any}()
 for cnt in 1 : 5
 # for cnt in 1 : 1
-    # time_shape_array_sing = test_shape_time_function(1000_000, 1000_000)
-    time_shape_array_sing = test_shape_time_function(1000_000, 16000)
+    time_shape_array_sing = test_shape_time_function(1000_000, 1000_000)
+    # time_shape_array_sing = test_shape_time_function(1000_000, 16000)
     
     push!(time_shape_array, time_shape_array_sing)
 end
@@ -89,7 +89,7 @@ xlabel!("Shape of Limit Order Book", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
 
-dir_name = "test_shape_fig"
+file_name = "test_shape_fig"
 
 mkdir("test/fig/$(file_name)")
 savefig("test/fig/$(file_name)/$(file_name)_fig.png")

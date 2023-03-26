@@ -148,7 +148,7 @@ ylabel!("Processing Time (seconds)", fontsize=18)
 
 # savefig("test/fig/stress_test_conc_20_pro_act_fig_all.png")
 
-dir_name = "stress_test_conc_20_pro_act_fig_all"
+file_name = "stress_test_conc_20_pro_act_fig_all"
 
 mkdir("test/fig/$(file_name)")
 savefig("test/fig/$(file_name)/$(file_name)_fig.png")
@@ -164,7 +164,7 @@ xlabel!("Number of Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
 # savefig("test/fig/stress_test_conc_20_pro_act_fig_partial.png")
-dir_name = "stress_test_conc_20_pro_act_fig_partial"
+file_name = "stress_test_conc_20_pro_act_fig_partial"
 
 mkdir("test/fig/$(file_name)")
 savefig("test/fig/$(file_name)/$(file_name)_fig.png")
@@ -183,7 +183,7 @@ ylabel!("Processing Time (seconds)", fontsize=18)
 
 # savefig("test/fig/stress_test_conc_20_pro_avg_fig_all.png")
 
-dir_name = "stress_test_conc_20_pro_avg_fig_all"
+file_name = "stress_test_conc_20_pro_avg_fig_all"
 
 mkdir("test/fig/$(file_name)")
 savefig("test/fig/$(file_name)/$(file_name)_fig.png")
@@ -200,7 +200,7 @@ ylabel!("Processing Time (seconds)", fontsize=18)
 
 # savefig("test/fig/stress_test_conc_20_pro_avg_fig_partial.png")
 
-dir_name = "stress_test_conc_20_pro_avg_fig_partial"
+file_name = "stress_test_conc_20_pro_avg_fig_partial"
 
 mkdir("test/fig/$(file_name)")
 savefig("test/fig/$(file_name)/$(file_name)_fig.png")

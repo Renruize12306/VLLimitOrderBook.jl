@@ -112,7 +112,7 @@ xlabel!("Number of Sell Limit Orders at All Price Levels", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
 
-dir_name = "test-2_time_num_market_fig"
+file_name = "test-2_time_num_market_fig"
 
 mkdir("test/fig/$(file_name)")
 savefig("test/fig/$(file_name)/$(file_name)_fig.png")
