@@ -111,7 +111,18 @@ bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:
 xlabel!("Number of Sell Limit Orders at All Price Levels", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
-savefig("test/fig/test-2_time_num_market_fig.png")
 
+dir_name = "test-2_time_num_market_fig"
+
+mkdir("test/fig/$(file_name)")
+savefig("test/fig/$(file_name)/$(file_name)_fig.png")
+
+write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
+write_io("test/fig/$(file_name)/$(file_name)_y_array_single.txt", y_array_single)
+write_io("test/fig/$(file_name)/$(file_name)_y_array_ratio_1.txt", y_array_ratio_1)
+write_io("test/fig/$(file_name)/$(file_name)_y_array_ratio_2.txt", y_array_ratio_2)
+write_io("test/fig/$(file_name)/$(file_name)_y_array_ratio_3.txt", y_array_ratio_3)
+write_io("test/fig/$(file_name)/$(file_name)_y_array_ratio_4.txt", y_array_ratio_4)
+write_io("test/fig/$(file_name)/$(file_name)_y_array_ratio_5.txt", y_array_ratio_5)
 
 # include("test/test-2_time_num_market_fig.jl")

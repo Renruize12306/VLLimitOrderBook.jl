@@ -110,7 +110,11 @@ bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:
 xlabel!("Number of Concurrent Threads)", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
-savefig("test/fig/stress_test_conc_num_proc_fig.png")
+dir_name = "stress_test_conc_num_proc_fig"
 
+mkdir("test/fig/$(file_name)")
+savefig("test/fig/$(file_name)/$(file_name)_fig.png")
 
+write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
+write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
 # include("test/stress_test_conc_num_proc_fig.jl")
