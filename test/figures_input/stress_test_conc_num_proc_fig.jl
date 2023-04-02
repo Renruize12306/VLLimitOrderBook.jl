@@ -113,7 +113,7 @@ ylabel!("Processing Time (seconds)", fontsize=18)
 file_name = "stress_test_conc_num_proc_fig"
 
 mkdir("test/fig/$(file_name)")
-savefig("test/fig/$(file_name)/$(file_name)_fig.png")
+savefig("test/fig/$(file_name)/$(file_name)_fig.pdf")
 
 write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
 write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
