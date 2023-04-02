@@ -105,7 +105,7 @@ end
 
 num_procs = 20
 order_array = 5000 : 5000 : 10_000_00
-# order_array = 5000 : 5000 : 20_000
+order_array = 5000 : 5000 : 20_000
 # tuple_res = time_n_num_orders_testing(num_procs, order_array)
 
 
@@ -113,13 +113,13 @@ order_array = 5000 : 5000 : 10_000_00
 
 time_vol_array = Vector{Any}()
 for cnt in 1 : 2
-    time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
-    # begin
-    #     local num_procs = 20
-    #     local order_array = 5000 : 5000 : 20_000
-    #     time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
-    #     println(time_vol_array_sing)
-    # end
+    # time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
+    begin
+        local num_procs = 20
+        local order_array = 5000 : 5000 : 20_000
+        time_vol_array_sing = time_n_num_orders_testing(num_procs, order_array)
+        println(time_vol_array_sing)
+    end
     push!(time_vol_array, time_vol_array_sing)
 end
 tuple_res = sum(time_vol_array) / length(time_vol_array)
@@ -163,7 +163,6 @@ ylabel!("Processing Time (seconds)", fontsize=18)
 # savefig("test/fig/stress_test_conc_20_pro_act_fig_partial.pdf")
 file_name = "stress_test_conc_20_pro_act_fig_partial"
 
-mkdir("test/fig/$(folder_name)")
 savefig("test/fig/$(folder_name)/$(file_name)_fig.pdf")
 
 
@@ -178,7 +177,7 @@ ylabel!("Processing Time (seconds)", fontsize=18)
 
 file_name = "stress_test_conc_20_pro_avg_fig_all"
 
-mkdir("test/fig/$(folder_name)")
+
 savefig("test/fig/$(folder_name)/$(file_name)_fig.pdf")
 
 
@@ -193,7 +192,6 @@ ylabel!("Processing Time (seconds)", fontsize=18)
 
 file_name = "stress_test_conc_20_pro_avg_fig_partial"
 
-mkdir("test/fig/$(folder_name)")
 savefig("test/fig/$(folder_name)/$(file_name)_fig.pdf")
 
 
