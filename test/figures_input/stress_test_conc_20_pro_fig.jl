@@ -146,15 +146,12 @@ bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:
 xlabel!("Number of Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
-# savefig("test/fig/stress_test_conc_20_pro_act_fig_all.png")
-
+# savefig("test/fig/stress_test_conc_20_pro_act_fig_all.pdf")
+folder_name = "stress_test_conc_20_pro"
 file_name = "stress_test_conc_20_pro_act_fig_all"
 
-mkdir("test/fig/$(file_name)")
-savefig("test/fig/$(file_name)/$(file_name)_fig.png")
-
-write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
-write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
+mkdir("test/fig/$(folder_name)")
+savefig("test/fig/$(folder_name)/$(file_name)_fig.pdf")
 
 
 
@@ -163,15 +160,11 @@ bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:
 xlabel!("Number of Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
-# savefig("test/fig/stress_test_conc_20_pro_act_fig_partial.png")
+# savefig("test/fig/stress_test_conc_20_pro_act_fig_partial.pdf")
 file_name = "stress_test_conc_20_pro_act_fig_partial"
 
-mkdir("test/fig/$(file_name)")
-savefig("test/fig/$(file_name)/$(file_name)_fig.png")
-
-write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
-write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
-
+mkdir("test/fig/$(folder_name)")
+savefig("test/fig/$(folder_name)/$(file_name)_fig.pdf")
 
 
 scatter(x_array, y_array_20_avg_process, label="Average performance across 20 concurrent processes", mc=:white, msc=colorant"#EF4035", legend=:best, 
@@ -181,15 +174,13 @@ bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:
 xlabel!("Number of Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
-# savefig("test/fig/stress_test_conc_20_pro_avg_fig_all.png")
+# savefig("test/fig/stress_test_conc_20_pro_avg_fig_all.pdf")
 
 file_name = "stress_test_conc_20_pro_avg_fig_all"
 
-mkdir("test/fig/$(file_name)")
-savefig("test/fig/$(file_name)/$(file_name)_fig.png")
+mkdir("test/fig/$(folder_name)")
+savefig("test/fig/$(folder_name)/$(file_name)_fig.pdf")
 
-write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
-write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
 
 
 
@@ -198,13 +189,17 @@ bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:
 xlabel!("Number of Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
-# savefig("test/fig/stress_test_conc_20_pro_avg_fig_partial.png")
+# savefig("test/fig/stress_test_conc_20_pro_avg_fig_partial.pdf")
 
 file_name = "stress_test_conc_20_pro_avg_fig_partial"
 
-mkdir("test/fig/$(file_name)")
-savefig("test/fig/$(file_name)/$(file_name)_fig.png")
+mkdir("test/fig/$(folder_name)")
+savefig("test/fig/$(folder_name)/$(file_name)_fig.pdf")
 
-write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
-write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
+
+write_io("test/fig/$(folder_name)/$(file_name)_x.txt", x_array)
+write_io("test/fig/$(folder_name)/$(file_name)_y_array_20_max_process.txt", y_array_20_max_process)
+write_io("test/fig/$(folder_name)/$(file_name)_y_array_sing_process.txt", y_array_sing_process)
+write_io("test/fig/$(folder_name)/$(file_name)_y_array_20_avg_process.txt", y_array_20_avg_process)
+
 # include("test/stress_test_conc_20_pro_act_fig.jl")
