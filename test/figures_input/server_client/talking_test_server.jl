@@ -31,7 +31,7 @@ function server_single_run(mod::Int)
         println("Server started....")
         server = HTTP.WebSockets.listen!("0.0.0.0", 8081) do ws
             cnt = 1
-            time_start = now().instant.periods.value
+            time_start = Int(time_ns())
             for msg in ws
                 if length(msg) > 0
                     ds = JSON.parse(msg)
@@ -39,7 +39,7 @@ function server_single_run(mod::Int)
                     cnt += 1
                     if cnt % mod == 0
                         # println(msg)
-                        time_stop = now().instant.periods.value
+                        time_stop = Int(time_ns())
                         push!(vector_res, time_stop - time_start)
                     end
                 end
@@ -78,7 +78,7 @@ function dump_file(time_rec_vec::Vector)
     println("finished writing server")
 end
 
-server, time_rec_vec = server_single_run(1000)
+server, time_rec_vec = server_single_run(10000)
 
 
 # include("test/figures_input/server_client/talking_test_server.jl")
