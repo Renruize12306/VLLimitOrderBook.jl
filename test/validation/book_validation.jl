@@ -405,10 +405,18 @@ end
     @test flag == true;
 end
 
-# # AMZN
-# order_messages = "data/messages/01302020.NASDAQ_ITCH50_AMZN_message.csv"
-# order_book = "data/book/01302020.NASDAQ_ITCH50_AMZN_book_"
+@testset "test order book from actual ITCH50 data feed -> NDQ AMZN " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_AMZN_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_AMZN_book_"
+    # uncheck_index = Set()
+    @time _, _, flag, ob = testing(1, 670233, 100, order_messages, order_book);
+    @test flag == true;
+end
 
-# # TSLA
-# order_messages = "data/messages/01302020.NASDAQ_ITCH50_TSLA_message.csv"
-# order_book = "data/book/01302020.NASDAQ_ITCH50_TSLA_book_"
+@testset "test order book from actual ITCH50 data feed -> NDQ TSLA " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_TSLA_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_TSLA_book_"
+    # uncheck_index = Set()
+    @time _, _, flag, ob = testing(1, 1030765, 100, order_messages, order_book);
+    @test flag == true;
+end
