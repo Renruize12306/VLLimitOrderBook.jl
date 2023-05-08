@@ -22,7 +22,7 @@ function assing_valiables(scale, dir)
     return [x_vec, y_vec]
 end
 
-dir = pwd() * "/test/fig/test_shape_fig"
+dir = pwd() * "/test/test_shape_fig"
 result_vec = assing_valiables(1000_000, dir)
 
 x_array = result_vec[1]
@@ -36,7 +36,7 @@ xlabel!("Order Book Depth", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
 
-savefig("$(dir)/pic.pdf")
+savefig("$(dir)/pic.png")
 
 
 # include("test/figures_input/re_draw/shape_fig.jl")

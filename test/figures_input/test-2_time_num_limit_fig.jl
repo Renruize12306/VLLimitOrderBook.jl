@@ -72,7 +72,7 @@ ylabel!("Processing Time (seconds)", fontsize=18)
 file_name = "test-2_time_num_limit_fig"
 
 mkdir("test/fig/$(file_name)")
-savefig("test/fig/$(file_name)/$(file_name)_fig.pdf")
+savefig("test/fig/$(file_name)/$(file_name)_fig.png")
 
 write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
 write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
