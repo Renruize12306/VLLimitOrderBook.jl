@@ -23,7 +23,7 @@ function assing_valiables(scale, dir)
     return [x_vec, y_vec]
 end
 
-dir = pwd() * "/test/fig/thesis_fig/test_insertion20_200_linux"
+dir = pwd() * "/test/fig/mac_test_insert/test_insertion"
 result_vec = assing_valiables(1000_000, dir)
 
 vec = result_vec[2]
@@ -40,5 +40,3 @@ function my_std(samples)
     return samples_std
 end
 STD_VALUE = my_std(vec)
-
-# include("test/figures_input/re_draw/get_sta.jl")
