@@ -78,7 +78,7 @@ function dump_file(time_rec_vec::Vector)
     println("finished writing server")
 end
 
-server, time_rec_vec = server_single_run(1000)
+server, time_rec_vec = server_single_run(10000)
 
 
 # include("test/figures_input/server_client/talking_test_server.jl")
