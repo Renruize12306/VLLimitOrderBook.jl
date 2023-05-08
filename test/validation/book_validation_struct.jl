@@ -177,7 +177,6 @@ begin
         last_timestamp = ""
         last_price = 0f0
         dicts = Vector{Dict{String, Any}}()
-        max_depth = 0
     
         for cur in 1 : n
             line_message = readline(io_order_messages)
@@ -269,32 +268,27 @@ begin
             #         end
             #     end
             # end
-            max_depth = max(max(length(ob.ask_orders.book), length(ob.bid_orders.book)), max_depth)
         end
         finish_queued_message(dicts, ob)
-        max_depth = max(max(length(ob.ask_orders.book), length(ob.bid_orders.book)), max_depth)
+    
         actual = build_line_book2(ob, level);
         close(io_order_messages)
         close(io_order_book)
-        
-        return actual, line_book, occursin(actual,line_book) , ob, max_depth
+        return actual, line_book, occursin(actual,line_book) , ob
     end
 end
 
 
 function validation()
-    # Tickers = ["INTC", "AAPL", "MSFT", "SPY", "QQQ", "AMZN", "TSLA"]
-    # Volumes = [1601350, 2008467, 1854140, 4468109, 4754517, 670233, 1030765]
-    Tickers = ["INTC", "QQQ"]
-    Volumes = [1601350, 4754517]
+    Tickers = ["INTC", "AAPL", "MSFT", "SPY", "QQQ", "AMZN", "TSLA"]
+    Volumes = [1601350, 2008467, 1854140, 4468109, 4754517, 670233, 1030765]
 
     for i in eachindex(Tickers)
         @testset "test order book from actual ITCH50 data feed -> NDQ $(Tickers[i]) " begin
             order_messages = "data/messages/01302020.NASDAQ_ITCH50_$(Tickers[i])_message.csv"
             order_book = "data/book/01302020.NASDAQ_ITCH50_$(Tickers[i])_book_"
-            @time _, _, flag, ob, max_depth = testing(1, Volumes[i], 100, order_messages, order_book);
-            println("MAX_DEPTH for $(Tickers[i]): ", max_depth)
-            @test flag == true;        
+            @time _, _, flag, ob = testing(1, Volumes[i], 100, order_messages, order_book);
+        @test flag == true;
         end
     end
 end
