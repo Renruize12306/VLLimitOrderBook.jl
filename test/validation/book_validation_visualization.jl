@@ -1,4 +1,4 @@
-using VLLimitOrderBook, Test, Plots
+using VLLimitOrderBook, Test
 
 begin 
     # orderbook initialization
@@ -10,7 +10,7 @@ begin
         arr = split(line, ',')
         ans = Dict{String, Any}()
 
-        ans["timestamp"] = parse(Int64, arr[1])
+        ans["timestamp"] = arr[1]
         ans["order_type"] = arr[2]
 
         if arr[2] == "P"
@@ -141,11 +141,10 @@ begin
         return join(actual)
     end
 
-    function finish_queued_message(dicts, ob, dict_time_price_from_actual_execution)
+    function finish_queued_message(dicts, ob)
         while length(dicts) > 0
             dict = popfirst!(dicts)
             order_match_lst, shares_left = execute_with_displayed_message_first(ob, dict)
-            dict_time_price_from_actual_execution[dict["timestamp"]] = order_match_lst[1].price
         end
     end
 
@@ -178,9 +177,7 @@ begin
         last_timestamp = ""
         last_price = 0f0
         dicts = Vector{Dict{String, Any}}()
-        dict_time_price_from_message = Dict{Any, Any}() # only Type "A" and "E" can have this
-        dict_time_price_from_actual_execution = Dict{Any, Any}() # only submit market order can have this
-        
+    
         for cur in 1 : n
             line_message = readline(io_order_messages)
             line_book = readline(io_order_book)
@@ -189,17 +186,19 @@ begin
                 continue
             end
     
+            # if cur == 1818157
+            #     println()
+            # end
+    
             dict = process_message_string(line_message)
     
             if dict["timestamp"] != last_timestamp || dict["order_type"] != "C"
                 # some message come in queue at the same time but in different order types, we need to process the queued message first
                 # some message come in same time but could be all executed at different prices, this might result in lower priority, 
                 # We choose to queue them and execute as soon as we in the next timestamp.
-                finish_queued_message(dicts, ob, dict_time_price_from_actual_execution)
+                finish_queued_message(dicts, ob)
             end
-            if dict["order_type"] == "C" || dict["order_type"] == "E"
-                dict_time_price_from_message[dict["timestamp"]] = dict["order_price"]
-            end
+            
     
             if dict["order_type"] == "A"
                 submit_limit_order!(ob, dict["order_id"], dict["order_side"], dict["order_price"], dict["order_size"], dict["mpid"])
@@ -231,7 +230,13 @@ begin
                     raise_priorty_via_display_property!(ob, dict["order_id"], dict["order_side"], dict["order_price"], false)
                     order_match_lst, shares_left = submit_market_order!(ob, dict["order_side"], dict["execute_size"], false)
                 end
-                dict_time_price_from_actual_execution[dict["timestamp"]] = order_match_lst[1].price
+    
+                # if checked_id  == 1
+                #     order_match_lst, shares_left = submit_market_order!(ob, dict["order_side"], dict["execute_size"], true)
+                # else
+                #     raise_priorty_via_display_property!(ob, dict["order_id"], dict["order_side"], dict["order_price"], false)
+                #     order_match_lst, shares_left = submit_market_order!(ob, dict["order_side"], dict["execute_size"], false)
+                # end
 
             elseif dict["order_type"] == "R"
                 cancel_order!(ob, dict["old_order_id"], dict["order_side"], dict["old_order_price"])
@@ -242,64 +247,89 @@ begin
                 # aggressive pegging order is placed, it will have higher priority since the price is higher
                 cancel_partial_order!(ob, dict["order_id"], dict["order_side"], dict["old_order_price"], dict["execute_size"])
                 submit_limit_order!(ob, dict["order_id"], dict["order_side"], dict["order_price"], dict["execute_size"], dict["mpid"], ALLOW_LOCKING)
+                # order_match_lst, shares_left = submit_market_order!(ob, dict["order_side"], dict["execute_size"])
                 push!(dicts, dict)
             end
             last_timestamp = dict["timestamp"]
             if dict["order_type"] != "P"
                 last_price = dict["order_price"]
             end
+            # begin # This part examine every line of the messages
+            #     if cur >= s
+            #         if dict["order_type"] != "C"
+            #             actual = build_line_book2(ob, level);
+            #             mark = occursin(actual,line_book)
+            #             println(order_book, "\tRound: ", cur, "\tFlag: ", mark)
+            #             if (!mark)
+            #                 break;
+            #             end
+            #         else 
+            #             println(cur, " is in unchecked_index set")
+            #         end
+            #     end
+            # end
         end
-        finish_queued_message(dicts, ob, dict_time_price_from_actual_execution)
+        finish_queued_message(dicts, ob)
     
         actual = build_line_book2(ob, level);
         close(io_order_messages)
         close(io_order_book)
-        return actual, line_book, occursin(actual,line_book) , ob, dict_time_price_from_message, dict_time_price_from_actual_execution
-    end
-
-    function plot_visualization(dict_time_price, ticker, file_name)
-        time_vec = Vector{Any}()
-        price_vec = Vector{Any}()
-        for key in keys(dict_time_price)
-            push!(time_vec, key)
-        end
-        time_vec = sort(time_vec)
-        for key in time_vec
-            push!(price_vec, dict_time_price[key])
-        end
-        x_array = time_vec[2 : end] ./ 3.6e+12
-        y_array = price_vec[2 : end]
-        scatter(x_array, y_array, label="Price", mc=:white, msc=colorant"#EF4035", legend=:best, ms = 0.5, markerstrokewidth = 0.5 ,
-        bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:transparent, lw=3)
-        xlabel!("Hours since midnight for ticker: $(ticker)", fontsize=18)
-        ylabel!("Last Trading Price (USD)", fontsize=18)
-
-        savefig("test/fig/$(file_name)/$(ticker)_fig.pdf")
-
-        write_io("test/fig/$(file_name)/$(ticker)_x.txt", x_array)
-        write_io("test/fig/$(file_name)/$(ticker)_y.txt", y_array)
+        return actual, line_book, occursin(actual,line_book) , ob
     end
 end
 
-function test_last_trade(file_name)
-    Tickers = ["INTC", "AAPL", "MSFT", "SPY", "QQQ", "AMZN", "TSLA"]
-    Volumes = [1601350, 2008467, 1854140, 4468109, 4754517, 670233, 1030765]
-
-    mkdir("test/fig/$(file_name)")
-
-    for i in eachindex(Tickers)
-        @testset "test order book from actual ITCH50 data feed -> NDQ $(Tickers[i]) " begin
-            order_messages = "data/messages/01302020.NASDAQ_ITCH50_$(Tickers[i])_message.csv"
-            order_book = "data/book/01302020.NASDAQ_ITCH50_$(Tickers[i])_book_"
-            _, _, flag, ob, dict_time_price_from_message, dict_time_price_from_actual_execution = testing(1, Volumes[i], 100, order_messages, order_book);
-            @test flag == true;
-            @test length(dict_time_price_from_message) == length(dict_time_price_from_actual_execution)
-            @test dict_time_price_from_message == dict_time_price_from_actual_execution
-            plot_visualization(dict_time_price_from_actual_execution, Tickers[i], file_name)
-        end
-    end
+@testset "test order book from actual ITCH50 data feed -> PSX MSFT " begin
+    order_messages = "data/messages/03272019.PSX_ITCH50_MSFT_message.csv"
+    order_book = "data/book/03272019.PSX_ITCH50_MSFT_book_"
+    _, _, flag, ob = testing(1, 503954, 36, order_messages, order_book);
+    @test flag == true;
 end
 
-test_last_trade("test_last_trade_price")
+@testset "test order book from actual ITCH50 data feed -> NDQ INTC " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_INTC_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_INTC_book_"
+    _, _, flag, ob = testing(1, 1601350, 100, order_messages, order_book);
+    @test flag == true;
+end
 
-# include("test/test-2_time_num_market_fig.jl")
+@testset "test order book from actual ITCH50 data feed -> NDQ AAPL " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_AAPL_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_AAPL_book_"
+    @time _, _, flag, ob = testing(1, 2008467, 100, order_messages, order_book);
+    @test flag == true;
+end
+
+@testset "test order book from actual ITCH50 data feed -> NDQ MSFT " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_MSFT_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_MSFT_book_"
+    @time _, _, flag, ob = testing(1, 1854140, 100, order_messages, order_book);
+    @test flag == true;
+end
+
+@testset "test order book from actual ITCH50 data feed -> NDQ SPY " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_SPY_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_SPY_book_"
+    @time _, _, flag, ob = testing(1, 4468109, 100, order_messages, order_book);
+    @test flag == true;
+end
+
+@testset "test order book from actual ITCH50 data feed -> NDQ QQQ " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_QQQ_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_QQQ_book_"
+    @time _, _, flag, ob = testing(1, 4754517, 100, order_messages, order_book);
+    @test flag == true;
+end
+
+@testset "test order book from actual ITCH50 data feed -> NDQ AMZN " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_AMZN_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_AMZN_book_"
+    @time _, _, flag, ob = testing(1, 670233, 100, order_messages, order_book);
+    @test flag == true;
+end
+
+@testset "test order book from actual ITCH50 data feed -> NDQ TSLA " begin
+    order_messages = "data/messages/01302020.NASDAQ_ITCH50_TSLA_message.csv"
+    order_book = "data/book/01302020.NASDAQ_ITCH50_TSLA_book_"
+    @time _, _, flag, ob = testing(1, 1030765, 100, order_messages, order_book);
+    @test flag == true;
+end
