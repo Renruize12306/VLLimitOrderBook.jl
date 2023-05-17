@@ -69,10 +69,10 @@ function start_client_and_save_file(mod::Int)
     time_sent_vec = time_sent_vec[2 : end]
     num_sent_vec = num_sent_res[2 : end]
 
-    write_io("test/figures_input/server_client/data/time_sent_vec.txt", time_sent_vec)
-    write_io("test/figures_input/server_client/data/num_sent_vec.txt", num_sent_vec)
+    write_io("test/performance_evaluation/server_client/data/time_sent_vec.txt", time_sent_vec)
+    write_io("test/performance_evaluation/server_client/data/num_sent_vec.txt", num_sent_vec)
     println("finished writing client")
 end
 
 start_client_and_save_file(1000)
-# include("test/figures_input/server_client/talking_test_client.jl")
+# include("test/performance_evaluation/server_client/talking_test_client.jl")

@@ -5,8 +5,8 @@
 test/dummy
 data/
 test/fig/
-test/figures_input/server_client/linux*
-test/figures_input/server_client/mac*
-test/figures_input/server_client/*/*.*
-test/figures_input/server_client/*
-test/figures_input/server_client/ms/*
+test/performance_evaluation/server_client/linux*
+test/performance_evaluation/server_client/mac*
+test/performance_evaluation/server_client/*/*.*
+test/performance_evaluation/server_client/*
+test/performance_evaluation/server_client/ms/*

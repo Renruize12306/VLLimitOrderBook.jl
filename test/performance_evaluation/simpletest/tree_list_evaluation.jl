@@ -44,4 +44,4 @@ end
 array_res = sum(array_res_vector) / length(array_res_vector)
 
 
-# include("test/figures_input/simpletest/tree_list.jl")
+# include("test/performance_evaluation/simpletest/tree_list.jl")
