@@ -41,4 +41,4 @@ function my_std(samples)
 end
 STD_VALUE = my_std(vec)
 
-# include("test/figures_input/re_draw/get_sta.jl")
+# include("test/figures_input/re_draw/mean_max_min_std.jl")

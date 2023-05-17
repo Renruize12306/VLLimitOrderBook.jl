@@ -30,7 +30,20 @@ FAQ:
 
 * We did implement notification feature in the earlier [commits](https://github.com/Renruize12306/VLLimitOrderBook.jl/commit/d1773488d154122ad3fe3fe9dc8ca21d96438453), but we then find the that cross matching between bid/ask price is uncommon, it also lower the matching profiency of Limit Order Book. Hence, we simply remove this feature in the later iterations.
 
-
+## Folder Structure
+```
+VLLimitOrderBook.jl
+│
+└───src (Julia source code for main package)
+│
+└───test 
+    │
+    └───performance_evaluation (performance evaluation for the limit order book)
+    │
+    └───validation (validation and error analysis with the Nasdaq historical data)
+    │
+    └───runtests.jl (test code for the logic correctness)
+```
 ## Usage
 
 ### Install

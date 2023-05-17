@@ -93,4 +93,4 @@ begin
     dict, n, ratio = testing(1030765, order_messages);
 end
 
-# include("test/validation/statistic.jl")
+# include("test/validation/order_type_statistic.jl")

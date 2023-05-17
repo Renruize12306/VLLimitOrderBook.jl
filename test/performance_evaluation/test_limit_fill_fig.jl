@@ -69,7 +69,7 @@ bg="floralwhite", background_color_outside="white", framestyle=:box, fg_legend=:
 xlabel!("Number of Limit Orders Placed", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
-file_name = "test-2_time_num_limit_fig"
+file_name = "test_limit_fill_fig"
 
 mkdir("test/fig/$(file_name)")
 savefig("test/fig/$(file_name)/$(file_name)_fig.pdf")
@@ -77,4 +77,4 @@ savefig("test/fig/$(file_name)/$(file_name)_fig.pdf")
 write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
 write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
 
-# include("test/test-2_time_num_limit_fig.jl")
+# include("test/test_limit_fill_fig.jl")

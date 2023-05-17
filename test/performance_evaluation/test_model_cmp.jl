@@ -81,4 +81,4 @@ savefig("test/fig/$(file_name)/$(file_name)_fig.pdf")
 write_io("test/fig/$(file_name)/$(file_name)_x.txt", x_array)
 write_io("test/fig/$(file_name)/$(file_name)_y.txt", y_array)
 
-# include("test/test-2_time_num_limit_fig.jl")
+# include("test/test_model_cmp.jl")

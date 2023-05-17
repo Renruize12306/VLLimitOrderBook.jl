@@ -3,12 +3,12 @@ begin
         "utility.jl",
         # "test_insertion.jl",
         # "test_shape_fig.jl",
-        # "test-2_time_num_limit_fig.jl",
-        "test-2_time_num_limit_fig_cmp.jl",
-        # "test-2_time_num_market_fig.jl",
+        # "test_limit_fill_fig.jl",
+        "test_model_cmp.jl",
+        # "test_market_fill_fig.jl",
         # "stress_test_conc_20_pro_fig.jl",
         # "stress_test_conc_num_proc_fig.jl",
-        # "../validation/book_validation_visualization.jl",
+        # "../validation/book_validation_price_visualization.jl",
         ]
     for file in arr
         println("Started\t", file)
@@ -17,4 +17,4 @@ begin
     end
 end
 
-# include("test/figures_input/runn_fig_test.jl")
+# include("test/figures_input/runnning_fig_test.jl")

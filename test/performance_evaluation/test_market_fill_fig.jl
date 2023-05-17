@@ -112,7 +112,7 @@ xlabel!("Number of Sell Limit Orders at All Price Levels", fontsize=18)
 ylabel!("Processing Time (seconds)", fontsize=18)
 
 
-file_name = "test-2_time_num_market_fig"
+file_name = "test_market_fill_fig"
 
 mkdir("test/fig/$(file_name)")
 savefig("test/fig/$(file_name)/$(file_name)_fig.pdf")
@@ -125,4 +125,4 @@ write_io("test/fig/$(file_name)/$(file_name)_y_array_ratio_3.txt", y_array_ratio
 write_io("test/fig/$(file_name)/$(file_name)_y_array_ratio_4.txt", y_array_ratio_4)
 write_io("test/fig/$(file_name)/$(file_name)_y_array_ratio_5.txt", y_array_ratio_5)
 
-# include("test/test-2_time_num_market_fig.jl")
+# include("test/test_market_fill_fig.jl")
